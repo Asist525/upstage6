@@ -17,6 +17,7 @@ class HateBiasAgent(BaseAgent):
         _, sentences = extract_split_payload(split_payload)
         
         all_issues = []
+        scores = []
         chunk_size = 50
         
         chunks = []
@@ -32,15 +33,24 @@ class HateBiasAgent(BaseAgent):
             for future in as_completed(futures):
                 try:
                     res = future.result()
-                    if res and "issues" in res:
-                        all_issues.extend(res["issues"])
+                    if res:
+                        if "issues" in res:
+                            all_issues.extend(res["issues"])
+                        if "score" in res and isinstance(res["score"], (int, float)):
+                            scores.append(res["score"])
                 except Exception as e:
                     print(f"[HateBiasAgent] Chunk failed: {e}")
 
         # 정렬: 문장 인덱스 순
         all_issues.sort(key=lambda x: x.get("sentence_index", -1))
+        
+        # 전체 점수 계산 (평균) - 편향이 없을수록 높음
+        final_score = 100
+        if scores:
+            final_score = int(sum(scores) / len(scores))
             
         return {
+            "score": final_score,
             "issues": all_issues,
             "note": f"Analyzed {len(sentences)} sentences in {len(chunks)} chunks (Parallel)"
         }
@@ -63,6 +73,7 @@ You are a strict JSON generator. You MUST output valid JSON only.
 
 출력 JSON 형식:
 {{
+  "score": <int 0-100, 혐오/편견 없는 청정 윤리 점수>,
   "issues": [
     {{
       "issue_type": "bias | hate | stereotype",

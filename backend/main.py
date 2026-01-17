@@ -50,18 +50,7 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def log_requests(request, call_next):
-        started_at = time.perf_counter()
         response = await call_next(request)
-        duration_ms = int((time.perf_counter() - started_at) * 1000)
-        logger.info(
-            "request",
-            extra={
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": response.status_code,
-                "duration_ms": duration_ms,
-            },
-        )
         return response
 
     # -------------------------

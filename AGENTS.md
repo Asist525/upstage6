@@ -36,7 +36,7 @@
 - 프런트 하이라이트는 `highlights`/`normalized_issues`를 우선 사용합니다.
 
 ## LLM/분석 주의사항
-- `backend/app/agents/tools/split_agent.py`는 대용량 텍스트에서 임베딩 호출이 실패하던 이슈를 피하려고 `embed_text` 호출을 제거했습니다. 다시 사용하려면 길이 제한/분할 처리 등 방어 로직을 추가하세요.
+- `backend/app/agents/tools/split.py`는 대용량 텍스트에서 임베딩 호출이 실패하던 이슈를 피하려고 `embed_text` 호출을 제거했습니다. 다시 사용하려면 길이 제한/분할 처리 등 방어 로직을 추가하세요.
 - LLM 호출 로깅은 `backend/app/llm/chat.py`, `backend/app/llm/embedding.py`에서 길이/성공 여부만 기록합니다. 본문 내용을 로그로 남기지 마세요.
 - `.hwp` 파서는 `olefile` 설치가 필요합니다(미설치 시 에러 문자열 반환).
 

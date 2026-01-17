@@ -10,8 +10,9 @@ reader_persona_agent = ReaderPersonaAgent()
 
 @traceable_timed(name="reader_persona")
 def reader_persona_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 1/6 - 분석 시작 및 페르소나 설정 중...")
+    logger.info("페르소나 설정: [START]")
     result = reader_persona_agent.run(state["context"])
+    logger.info("페르소나 설정: [END]")
     return {
         "reader_persona": result
     }

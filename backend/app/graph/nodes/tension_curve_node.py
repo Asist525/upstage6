@@ -10,11 +10,12 @@ tension_curve_agent = TensionCurveAgent()
 
 @traceable_timed(name="tension_curve")
 def tension_curve_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 3/6 - [Tension] 긴장감 곡선 분석 시작...")
+    logger.info("긴장감 분석: [START]")
     result = tension_curve_agent.run(
-        state.get("split_text")
+        state.get("split_text"),
+        persona=state.get("reader_persona")
     )
-
+    logger.info("긴장감 분석: [END]")
     return {
         "tension_curve_result": result
     }

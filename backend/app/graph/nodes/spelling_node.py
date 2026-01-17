@@ -10,9 +10,9 @@ spelling_agent = SpellingAgent()
 
 @traceable_timed(name="spelling")
 def spelling_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 3/6 - [Spelling] 맞춤법 검사 시작...")
+    logger.info("맞춤법 검사: [START]")
     result = spelling_agent.run(state.get("split_text"))
-
+    logger.info("맞춤법 검사: [END]")
     return {
         "spelling_result": result
     }

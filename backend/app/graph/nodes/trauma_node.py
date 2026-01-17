@@ -10,11 +10,11 @@ trauma_agent = TraumaAgent()
 
 @traceable_timed(name="trauma")
 def trauma_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 3/6 - [Trauma] 트라우마 요소 분석 시작...")
+    logger.info("트라우마 분석: [START]")
     result = trauma_agent.run(
         state.get("split_text")
     )
-
+    logger.info("트라우마 분석: [END]")
     return {
         "trauma_result": result
     }

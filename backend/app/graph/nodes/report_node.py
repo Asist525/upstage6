@@ -16,7 +16,7 @@ def extract_issues(result: dict | None):
 
 @traceable_timed(name="report")
 def report_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 5/6 - 최종 분석 리포트 생성 중...")
+    logger.info("리포트 생성: [START]")
     split_summary, split_sentences = extract_split_payload(state.get("split_text"))
     report = report_agent.run(
         split_text={
@@ -30,7 +30,7 @@ def report_node(state: AgentState) -> AgentState:
         cliche_issues=extract_issues(state.get("genre_cliche_result")),
         persona_feedback=state.get("persona_feedback"),
     )
-
+    logger.info("리포트 생성: [END]")
     return {
         "final_report": report
     }

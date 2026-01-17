@@ -4,18 +4,43 @@ import logging
 from app.core.settings import get_settings
 from app.graph.graph import agent_app
 from app.graph.state import AgentState
-from app.agents.tools.split_agent import SplitAgent
+from app.agents.tools.split import Splitter
 from app.agents.tools.causality_agent import CausalityEvaluatorAgent
 from app.agents.tools.llm_aggregator import IssueBasedAggregatorAgent
-from app.agents.evaluators.final_evaluator import FinalEvaluatorAgent
-from app.agents.evaluators.tone_evaluator import ToneQualityAgent
-from app.agents.evaluators.causality_evaluator import CausalityQualityAgent
-from app.agents.evaluators.tension_evaluator import TensionQualityAgent
-from app.agents.evaluators.trauma_evaluator import TraumaQualityAgent
-from app.agents.evaluators.hatebias_evaluator import HateBiasQualityAgent
-from app.agents.evaluators.cliche_evaluator import GenreClicheQualityAgent
-from app.agents.evaluators.spelling_evaluator import SpellingQualityAgent
+# Evaluators removed
+# from app.agents.evaluators.final_evaluator import FinalEvaluatorAgent
+# ... imports removed ...
+
 from app.observability.langsmith import traceable
+from app.llm.client import has_upstage_api_key
+from app.services.split_map import build_split_payload
+from app.services.issue_normalizer import normalize_issues
+
+logger = logging.getLogger(__name__)
+
+# ... (omitted) ...
+
+def _run_final_evaluator(outputs: Dict[str, Any]) -> Dict[str, Any]:
+    # FinalEvaluatorAgent is removed
+    return {} 
+    
+    # Original Logic (commented out for reference)
+    # final_evaluator = FinalEvaluatorAgent()
+    # aggregate = outputs.get("aggregate") or outputs.get("aggregated") or {}
+    # if hasattr(aggregate, "dict"):
+    #     aggregate = aggregate.dict()
+    # try:
+    #     return final_evaluator.run(
+    #         aggregate=aggregate,
+    #         tone_issues=(outputs.get("tone") or {}).get("issues", []),
+    #         logic_issues=(outputs.get("logic") or {}).get("issues", []),
+    #         trauma_issues=(outputs.get("trauma") or {}).get("issues", []),
+    #         hate_issues=(outputs.get("hate_bias") or {}).get("issues", []),
+    #         cliche_issues=(outputs.get("genre_cliche") or {}).get("issues", []),
+    #         persona_feedback=outputs.get("persona_feedback"),
+    #     )
+    # except Exception as exc:
+    #     return {"error": str(exc)}
 from app.llm.client import has_upstage_api_key
 from app.services.split_map import build_split_payload
 from app.services.issue_normalizer import normalize_issues
@@ -121,16 +146,16 @@ async def _run_langgraph_full(text: str, context: Optional[str], mode: str) -> D
 
 def _run_causality_only(text: str, mode: str) -> Dict[str, Any]:
     logger.info("[DEBUG] _run_causality_only: Starting.")
-    split_agent = SplitAgent()
+    splitter = Splitter()
     causality_agent = CausalityEvaluatorAgent()
     aggregator = IssueBasedAggregatorAgent()
 
     try:
-        logger.info("[DEBUG] _run_causality_only: Running SplitAgent.")
-        split_result = split_agent.run(text)
-        logger.info("[DEBUG] _run_causality_only: SplitAgent finished.")
+        logger.info("[DEBUG] _run_causality_only: Running Splitter.")
+        split_result = splitter.run(text)
+        logger.info("[DEBUG] _run_causality_only: Splitter finished.")
     except Exception as e:
-        logger.error(f"[DEBUG] _run_causality_only: SplitAgent failed: {e}")
+        logger.error(f"[DEBUG] _run_causality_only: Splitter failed: {e}")
         split_result = build_split_payload(text)
 
     causality = {}
@@ -253,42 +278,28 @@ def _run_fallback(text: str, mode: str) -> Dict[str, Any]:
 
 
 def _run_final_evaluator(outputs: Dict[str, Any]) -> Dict[str, Any]:
-    final_evaluator = FinalEvaluatorAgent()
-    aggregate = outputs.get("aggregate") or outputs.get("aggregated") or {}
-    if hasattr(aggregate, "dict"):
-        aggregate = aggregate.dict()
-    try:
-        return final_evaluator.run(
-            aggregate=aggregate,
-            tone_issues=(outputs.get("tone") or {}).get("issues", []),
-            logic_issues=(outputs.get("logic") or {}).get("issues", []),
-            trauma_issues=(outputs.get("trauma") or {}).get("issues", []),
-            hate_issues=(outputs.get("hate_bias") or {}).get("issues", []),
-            cliche_issues=(outputs.get("genre_cliche") or {}).get("issues", []),
-            persona_feedback=outputs.get("persona_feedback"),
-        )
-    except Exception as exc:
-        return {"error": str(exc)}
+    # FinalEvaluatorAgent removed
+    return {}
 
 
 def _run_qa_scores(text: str, outputs: Dict[str, Any], mode: str) -> Dict[str, int]:
     scores: Dict[str, int] = {}
-    try:
-        causality_quality = CausalityQualityAgent()
-        scores["causality"] = causality_quality.run(
-            text,
-            outputs.get("logic") or outputs.get("causality") or {},
-        ).get("score", 0)
+    
+    def get_score(key_name):
+        obj = outputs.get(key_name) or {}
+        return obj.get("score", 0)
 
-        if mode == "full":
-            scores["tone"] = ToneQualityAgent().run(text, outputs.get("tone") or {}).get("score", 0)
-            scores["tension"] = TensionQualityAgent().run(text, outputs.get("tension_curve") or {}).get("score", 0)
-            scores["trauma"] = TraumaQualityAgent().run(text, outputs.get("trauma") or {}).get("score", 0)
-            scores["hate_bias"] = HateBiasQualityAgent().run(text, outputs.get("hate_bias") or {}).get("score", 0)
-            scores["cliche"] = GenreClicheQualityAgent().run(text, outputs.get("genre_cliche") or {}).get("score", 0)
-            scores["spelling"] = SpellingQualityAgent().run(text, outputs.get("spelling") or {}).get("score", 0)
-    except Exception:
-        return scores
+    # Causality is always run
+    scores["causality"] = get_score("causality") or get_score("logic")
+
+    if mode == "full":
+        scores["tone"] = get_score("tone")
+        scores["tension"] = get_score("tension_curve")
+        scores["trauma"] = get_score("trauma")
+        scores["hate_bias"] = get_score("hate_bias")
+        scores["cliche"] = get_score("genre_cliche")
+        scores["spelling"] = get_score("spelling")
+    
     return scores
 
 

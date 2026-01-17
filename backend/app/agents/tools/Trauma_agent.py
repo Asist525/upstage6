@@ -17,6 +17,7 @@ class TraumaAgent(BaseAgent):
         _, sentences = extract_split_payload(split_payload)
         
         all_issues = []
+        scores = []
         chunk_size = 50
         
         chunks = []
@@ -32,15 +33,24 @@ class TraumaAgent(BaseAgent):
             for future in as_completed(futures):
                 try:
                     res = future.result()
-                    if res and "issues" in res:
-                        all_issues.extend(res["issues"])
+                    if res:
+                        if "issues" in res:
+                            all_issues.extend(res["issues"])
+                        if "score" in res and isinstance(res["score"], (int, float)):
+                            scores.append(res["score"])
                 except Exception as e:
                     print(f"[TraumaAgent] Chunk failed: {e}")
 
         # 정렬: 문장 인덱스 순
         all_issues.sort(key=lambda x: x.get("sentence_index", -1))
+        
+        # 전체 점수 계산 (평균) - 안전할수록 높음
+        final_score = 100
+        if scores:
+            final_score = int(sum(scores) / len(scores))
             
         return {
+            "score": final_score,
             "issues": all_issues,
             "note": f"Analyzed {len(sentences)} sentences in {len(chunks)} chunks (Parallel)"
         }
@@ -58,10 +68,12 @@ You are a strict JSON generator. You MUST output valid JSON only.
 각 이슈의 sentence_index는 {start_index} + (청크 내 인덱스)여야 한다.
 
 목표:
-- 독자에게 심리적 충격, 불안, 트라우마를 유발할 가능성이 있는 표현(재난, 폭력, 위험행동 등) 식별
+1. 독자에게 심리적 충격, 불안, 트라우마를 유발할 가능성이 있는 표현(재난, 폭력, 위험행동 등) 식별
+2. 해당 청크의 안전성(트라우마 요소 부재)을 0~100점 점수로 평가할 것. (트라우마 요소가 없으면 100점)
 
 출력 JSON 형식:
 {{
+  "score": <int 0-100>,
   "issues": [
     {{
       "issue_type": "trauma_trigger",

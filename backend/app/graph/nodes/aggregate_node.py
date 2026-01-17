@@ -10,7 +10,8 @@ aggregator_agent = IssueBasedAggregatorAgent()
 
 @traceable_timed(name="aggregate")
 def aggregate_node(state: AgentState) -> AgentState:
-    logger.info("[PROGRESS] 4/6 - 모든 분석 결과 취합 및 검증 중...")
+    logger.info("분석 취합: [START]")
+    
     def extract_issues(result: dict | None):
         if not result:
             return []
@@ -35,6 +36,8 @@ def aggregate_node(state: AgentState) -> AgentState:
         persona_feedback=None,          # 별도 persona evaluator 붙이면 연결
         reader_context=reader_context,
     )
+    
+    logger.info("분석 취합: [END]")
 
     return {
         "aggregated_result": aggregate_result.model_dump(),

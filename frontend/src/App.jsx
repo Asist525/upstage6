@@ -32,10 +32,12 @@ function Badge({ children }) {
     <span style={{
       display: 'inline-block',
       padding: '2px 8px',
-      border: '1px solid #2a2a2c',
+      border: '1px solid var(--border)',
+      background: 'var(--bg-card)',
       borderRadius: 999,
       fontSize: 12,
-      color: '#cfcfd6'
+      color: 'var(--text-main)',
+      fontWeight: 500
     }}>
       {children}
     </span>
@@ -45,10 +47,10 @@ function Badge({ children }) {
 const ISSUE_COLORS = {
   tone: 'rgba(92, 107, 192, 0.5)',    // Indigo
   logic: 'rgba(255, 167, 38, 0.5)',   // Orange (logic/causality)
-  trauma: 'rgba(239, 83, 80, 0.5)',     // Red
-  hate_bias: 'rgba(171, 71, 188, 0.5)',// Purple
+  trauma: 'rgba(211, 47, 47, 0.6)',    // Strong Red (Material Red 700)
+  hate_bias: 'rgba(255, 64, 129, 0.6)', // Vibrant Rose Red (Lighter than before)
   genre_cliche: 'rgba(66, 165, 245, 0.5)',// Blue
-  spelling: 'rgba(236, 64, 122, 0.5)', // Pink
+  spelling: 'rgba(0, 188, 212, 0.6)',  // Cyan (Changed from Pink to avoid conflict with Trauma)
   tension: 'rgba(139, 195, 74, 0.5)',  // Light Green
   default: 'rgba(189, 189, 189, 0.4)'  // Grey
 }
@@ -164,7 +166,7 @@ function HighlightedText({ text, analysisResult, setTooltip }) {
           return (
             <mark
               key={`${segment.start}-${segment.end}`}
-              style={{ backgroundColor: color, color: '#fff', padding: '0 2px', borderRadius: 2, cursor: 'help' }}
+              style={{ backgroundColor: color, color: 'var(--text-main)', padding: '0 2px', borderRadius: 6, cursor: 'help', border: 'var(--highlight-border)', fontWeight: 500 }}
               onMouseEnter={(e) => handleMouseEnter(e, sortedIssues, color)}
               onMouseLeave={handleMouseLeave}
               onMouseMove={handleMouseMove}
@@ -251,7 +253,7 @@ function HighlightedText({ text, analysisResult, setTooltip }) {
           fragments.push(
             <mark
               key={`iss-${i}`}
-              style={{ backgroundColor: color, color: '#fff', padding: '0 2px', borderRadius: 2, cursor: 'help' }}
+              style={{ backgroundColor: color, color: 'var(--text-main)', padding: '0 2px', borderRadius: 6, cursor: 'help', border: 'var(--highlight-border)', fontWeight: 500 }}
               onMouseEnter={(e) => handleMouseEnterSimple(e, issue, color)}
               onMouseLeave={handleMouseLeave}
               onMouseMove={handleMouseMove}
@@ -328,7 +330,7 @@ function formatDisplayTimestamp(value) {
     return acc
   }, {})
   if (!parts.year) return raw
-  return `${parts.year}-${parts.month}-${parts.day}   ${parts.hour}:${parts.minute}:${parts.second}`
+  return `${parts.year}년 ${parts.month}월 ${parts.day}일 ${parts.hour}:${parts.minute}:${parts.second}`
 }
 
 function scoreColor(score) {
@@ -492,7 +494,8 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    document.documentElement.style.colorScheme = theme
+    document.documentElement.setAttribute('data-theme', theme)
+    // document.documentElement.style.colorScheme = theme
     localStorage.setItem('theme', theme)
   }, [theme])
 
@@ -628,6 +631,8 @@ export default function App() {
 
     setAnalysisElapsedSec(0)
     setIsAnalyzing(true); setError(null)
+    setRightView('chat')
+    setIsRightPanelOpen(true)
 
     try {
       const a = await runAnalysis(activeDocId, { personaCount, creativeFocus })
@@ -735,11 +740,28 @@ export default function App() {
     setLoading(true); setError(null)
     try {
       await deleteAnalysis(id)
-      const list = await listAnalysesByDoc(activeDocId)
-      setAnalyses(list)
+      
+      // Update main analyses list if valid
+      if (activeDocId) {
+        const list = await listAnalysesByDoc(activeDocId)
+        setAnalyses(list)
+      }
+
+      // If deleted analysis was currently active
       if (activeAnalysis?.id === id) {
         setActiveAnalysis(null)
         setRightView('report')
+      }
+
+      // Update history modal list directly
+      if (docHistoryOpenId) {
+        setDocHistoryById(prev => {
+          const current = prev[docHistoryOpenId] || []
+          return {
+            ...prev,
+            [docHistoryOpenId]: current.filter(x => x.id !== id)
+          }
+        })
       }
     } catch (e2) {
       setError(String(e2))
@@ -787,7 +809,7 @@ export default function App() {
   const historyDoc = docHistoryOpenId ? docs.find(doc => doc.id === docHistoryOpenId) : null
 
   function openUploadPanel() {
-    setLeftMode('upload')
+    setLeftMode(prev => (prev === 'upload' ? 'list' : 'upload'))
     setIsDragOver(false)
     setError(null)
   }
@@ -959,16 +981,16 @@ function SettingsIcon({ size = 28 }) {
           align-items: center;
           gap: 10px;
           padding: 8px 10px;
-          border: 1px solid #2a2a2c;
+          border: 1px solid var(--border);
           border-radius: 12px;
-          background: #141417;
-          color: #e6e6ea;
+          background: var(--bg-card);
+          color: var(--text-main);
           cursor: pointer;
           transition: background 0.18s ease, border-color 0.18s ease;
         }
         .account-bar:hover {
-          background: #1b1b1f;
-          border-color: #3a3a3f;
+          background: var(--bg-hover);
+          border-color: var(--border);
         }
         .account-avatar {
           width: 32px;
@@ -993,7 +1015,7 @@ function SettingsIcon({ size = 28 }) {
         .account-name {
           font-size: 13px;
           font-weight: 700;
-          color: #e6e6ea;
+          color: var(--text-main);
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -1049,15 +1071,19 @@ function SettingsIcon({ size = 28 }) {
             display: none;
           }
         }
+        @keyframes slideUp {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
       `}</style>
       <div className="scroll-hide main-layout" style={{
         display: 'grid',
-        gridTemplateColumns: `300px 1fr ${isRightPanelOpen ? '480px' : '0px'}`,
+        gridTemplateColumns: `300px 1fr ${isRightPanelOpen ? '600px' : '0px'}`,
         height: '100vh',
         gap: 8,
-        background: '#0f0f12',
-        filter: theme === 'light' ? 'invert(1) hue-rotate(180deg)' : 'none',
-        transition: 'grid-template-columns 0.3s ease-in-out, filter 0.2s ease',
+        background: 'var(--bg-main)',
+        // filter: theme === 'light' ? 'invert(1) hue-rotate(180deg)' : 'none', // Removed filter
+        transition: 'grid-template-columns 0.3s ease-in-out',
         overflow: 'hidden'
       }}>
         {/* Toast notifications */}
@@ -1096,7 +1122,7 @@ function SettingsIcon({ size = 28 }) {
         )}
 
         {/* Left panel */}
-        <div className="card left-panel" style={{ padding: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="card left-panel" style={{ padding: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', minHeight: 0, border: '2px solid var(--border)', background: 'var(--bg-sidebar)', position: 'relative' }}>
 
           {/* Header + Upload button */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
@@ -1140,7 +1166,7 @@ function SettingsIcon({ size = 28 }) {
               <div>
                 <div className="card" style={{
                   padding: 12,
-                  border: '3px solid #2a2a2c',
+                  border: '3px solid var(--border)',
                   background: 'rgba(46, 125, 50, 0.18)',
                   marginBottom: 10,
                   display: 'flex',
@@ -1154,24 +1180,6 @@ function SettingsIcon({ size = 28 }) {
                       파일을 업로드하거나 드래그 앤 드롭하세요.
                     </div>
                   </div>
-
-                  <button
-                    className="btn"
-                    onClick={closeLeftPanelToList}
-                    disabled={isUploading}
-                    style={{
-                      opacity: isUploading ? 0.7 : 1,
-                      cursor: isUploading ? 'not-allowed' : 'pointer',
-                      width: 100,
-                      height: 42,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    title="되돌아오기"
-                  >
-                    돌아가기
-                  </button>
                 </div>
 
                 <div
@@ -1181,7 +1189,7 @@ function SettingsIcon({ size = 28 }) {
                   onDrop={onDrop}
                   style={{
                     padding: 14,
-                    border: `3px dashed ${isDragOver ? '#6aa9ff' : '#2a2a2c'}`,
+                    border: `3px dashed ${isDragOver ? '#6aa9ff' : 'var(--border)'}`,
                     background: isDragOver ? 'rgba(50, 100, 200, 0.22)' : 'rgba(50, 100, 200, 0.12)',
                     minHeight: 220,
                     display: 'flex',
@@ -1231,93 +1239,85 @@ function SettingsIcon({ size = 28 }) {
               </div>
             )}
 
-            {/* Settings panel */}
+            {/* Settings panel - Popover style */}
             {leftMode === 'settings' && (
-              <div>
-                <div className="card" style={{
-                  padding: 12,
-                  border: '3px solid #2a2a2c',
-                  background: '#141417',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: 16 }}>설정</div>
-                  </div>
+              <div
+                className="card"
+                style={{
+                  position: 'absolute',
+                  bottom: 70, // Account bar height + margin
+                  left: 12,
+                  right: 12,
+                  zIndex: 100,
+                  padding: 14,
+                  minHeight: 200,
+                  border: '3px solid var(--border)',
+                  background: 'var(--bg-panel)',
+                  boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
+                  animation: 'slideUp 0.2s ease-out'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                   <div style={{ fontWeight: 800, fontSize: 16 }}>설정</div>
+                   <button onClick={() => setLeftMode('list')} className="btn" style={{ padding: '4px 8px', fontSize: 12 }}>닫기</button>
                 </div>
 
-                <div className="card" style={{
-                  marginTop: 10,
-                  padding: 14,
-                  minHeight: 320,
-                  border: '3px solid #2a2a2c',
-                  background: '#0f0f12'
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-
-
-
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                      <div>
-                        <div style={{ fontWeight: 800, fontSize: 16 }}>테마</div>
-                        <div className="muted" style={{ fontSize: 12 }}>Light / Dark</div>
-                      </div>
-
-                      <button
-                        className="btn"
-                        type="button"
-                        onClick={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))}
-                        aria-pressed={theme === 'light'}
-                        style={{
-                          minWidth: 150,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 10,
-                          padding: '6px 10px'
-                        }}
-                      >
-                        <span style={{ fontSize: 12, fontWeight: 800 }}>
-                          {theme === 'light' ? 'Light' : 'Dark'}
-                        </span>
-
-                        <span aria-hidden="true" style={{
-                          width: SWITCH_W,
-                          height: SWITCH_H,
-                          borderRadius: 999,
-                          background: theme === 'light' ? '#66bb6a' : '#555',
-                          position: 'relative',
-                          display: 'inline-block',
-                          padding: SWITCH_PAD,
-                          boxSizing: 'border-box',
-                          transition: 'background 0.18s ease',
-                          border: '1px solid #2a2a2c'
-                        }}>
-                          <span style={{
-                            width: KNOB,
-                            height: KNOB,
-                            borderRadius: '50%',
-                            background: '#0f0f12',
-                            display: 'block',
-                            transform: theme === 'light' ? `translateX(${KNOB_TRAVEL}px)` : 'translateX(0px)',
-                            transition: 'transform 0.18s ease',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.45)'
-                          }} />
-                        </span>
-                      </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: 16 }}>테마</div>
+                      <div className="muted" style={{ fontSize: 12 }}>Light / Dark</div>
                     </div>
 
+                    <button
+                      className="btn"
+                      type="button"
+                      onClick={() => setTheme(prev => (prev === 'light' ? 'dark' : 'light'))}
+                      aria-pressed={theme === 'light'}
+                      style={{
+                        minWidth: 150,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 10,
+                        padding: '6px 10px'
+                      }}
+                    >
+                      <span style={{ fontSize: 12, fontWeight: 800 }}>
+                        {theme === 'light' ? 'Light' : 'Dark'}
+                      </span>
+
+                      <span aria-hidden="true" style={{
+                        width: SWITCH_W,
+                        height: SWITCH_H,
+                        borderRadius: 999,
+                        background: theme === 'light' ? '#66bb6a' : '#555',
+                        position: 'relative',
+                        display: 'inline-block',
+                        padding: SWITCH_PAD,
+                        boxSizing: 'border-box',
+                        transition: 'background 0.18s ease',
+                        border: '1px solid #2a2a2c'
+                      }}>
+                        <span style={{
+                          width: KNOB,
+                          height: KNOB,
+                          borderRadius: '50%',
+                          background: '#0f0f12',
+                          display: 'block',
+                          transform: theme === 'light' ? `translateX(${KNOB_TRAVEL}px)` : 'translateX(0px)',
+                          transition: 'transform 0.18s ease',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.45)'
+                        }} />
+                      </span>
+                    </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* List panel */}
-            {leftMode === 'list' && (
+            {/* List panel - Always visible if list or settings (behind settings) */}
+            {(leftMode === 'list' || leftMode === 'settings') && (
               <>
                 <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>원고 목록</div>
                 {docs.map(d => (
@@ -1336,18 +1336,19 @@ function SettingsIcon({ size = 28 }) {
                         style={{ 
                           flex: 1,
                           textAlign: 'left',
-                          background: d.id === activeDocId ? '#1b1b1f' : undefined
+                          paddingTop: 16,
+                          paddingBottom: 16,
+                          background: d.id === activeDocId ? 'var(--bg-hover)' : undefined
                         }}
                       >
-                        <div style={{ fontWeight: 650 }}>{d.title}</div>
-                        <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{d.filename}</div>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{d.filename}</div>
                       </button>
                     </div>
 
                     {docScoreOpenId === d.id && (
-                      <div className="card" style={{ marginTop: 8, padding: 10, border: '1px solid #2a2a2c', background: '#141417' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#9aa0a6' }}>
+                      <div className="card" style={{ marginTop: 8, padding: 10, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
                             문서 점수 요약
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1360,19 +1361,19 @@ function SettingsIcon({ size = 28 }) {
                               }}
                               disabled={loading || isAnalyzing || isSavingDraft || isUploading}
                               style={{
-                                padding: '2px 6px',
-                                minWidth: 28,
-                                height: 24,
+                                padding: 0,
+                                minWidth: 32,
+                                height: 30,
                                 display: 'grid',
                                 placeItems: 'center',
-                                background: 'rgba(46, 125, 50, 0.12)',
-                                border: '1px solid rgba(76, 175, 80, 0.55)',
-                                color: '#4caf50'
+                                background: 'rgba(0, 200, 83, 0.15)',
+                                border: '2px solid #00C853',
+                                color: '#00C853'
                               }}
                               title="문서 기록"
                               aria-label="문서 기록"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path
                                   d="M4 7c0-2 4-3 8-3s8 1 8 3-4 3-8 3-8-1-8-3Z"
                                   stroke="currentColor"
@@ -1401,19 +1402,19 @@ function SettingsIcon({ size = 28 }) {
                               }}
                               disabled={loading || isAnalyzing || isSavingDraft || isUploading}
                               style={{
-                                padding: '2px 6px',
-                                minWidth: 28,
-                                height: 24,
+                                padding: 0,
+                                minWidth: 32,
+                                height: 30,
                                 display: 'grid',
                                 placeItems: 'center',
-                                background: '#1a0f10',
-                                border: '1px solid rgba(239, 83, 80, 0.55)',
+                                background: 'rgba(239, 83, 80, 0.15)',
+                                border: '2px solid #ef5350',
                                 color: '#ef5350'
                               }}
                               title="문서 삭제"
                               aria-label="문서 삭제"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path
                                   d="M4 7h16M9 7v-2.2c0-.7.6-1.3 1.3-1.3h3.4c.7 0 1.3.6 1.3 1.3V7M9.5 11.5v6M14.5 11.5v6M6.5 7l1 13.2c.1 1 1 1.8 2 1.8h5c1 0 1.9-.8 2-1.8L17.5 7"
                                   stroke="currentColor"
@@ -1439,16 +1440,23 @@ function SettingsIcon({ size = 28 }) {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 {entries.map(([name, value]) => {
                                   const safeScore = Math.max(0, Math.min(100, Math.round(value)))
-                                  const color = scoreColor(safeScore)
+                                  
+                                  // 에이전트 키 매핑 (ISSUE_COLORS와 일치시키기 위해)
+                                  let agentKey = name.toLowerCase();
+                                  if (agentKey === 'causality') agentKey = 'logic';
+                                  if (agentKey === 'cliche') agentKey = 'genre_cliche';
+                                  
+                                  const agentColor = convertRgbaToRgb(ISSUE_COLORS[agentKey] || ISSUE_COLORS.default);
+
                                   return (
                                     <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                      <div style={{ width: 70, fontSize: 11, color: '#cfcfd6', textTransform: 'capitalize' }}>
+                                      <div style={{ width: 80, fontSize: 11, fontWeight: 700, color: 'var(--text-main)', textTransform: 'capitalize' }}>
                                         {name.replace('_', ' ')}
                                       </div>
-                                      <div style={{ flex: 1, height: 6, background: '#1b1b1f', borderRadius: 999, overflow: 'hidden' }}>
-                                        <div style={{ width: `${safeScore}%`, height: '100%', background: color }} />
+                                      <div style={{ flex: 1, height: 6, background: 'var(--bg-panel)', borderRadius: 999, overflow: 'hidden' }}>
+                                        <div style={{ width: `${safeScore}%`, height: '100%', background: agentColor }} />
                                       </div>
-                                      <div style={{ width: 30, textAlign: 'right', fontSize: 11, color }}>
+                                      <div style={{ width: 40, textAlign: 'right', fontSize: 13, fontWeight: 800, color: agentColor }}>
                                         {safeScore}
                                       </div>
                                     </div>
@@ -1535,49 +1543,53 @@ function SettingsIcon({ size = 28 }) {
                   gap: 8,
                   paddingRight: 8
                 }}>
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={onLogout}
-                    title="Logout"
-                    aria-label="Logout"
-                    disabled={!user}
-                    style={{
-                      width: 38,
-                      height: 38,
-                      display: 'grid',
-                      placeItems: 'center',
-                      opacity: user ? 1 : 0.45,
-                      background: '#1a0f10',
-                      color: '#ef5350'
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                      <path d="M10 17l5-5-5-5" />
-                      <path d="M15 12H3" />
-                    </svg>
-                  </button>
+                                                      <button
+                                                        className="btn"
+                                                        type="button"
+                                                        onClick={onLogout}
+                                                        title="Logout"
+                                                        aria-label="Logout"
+                                                        disabled={!user}
+                                                        style={{
+                                                          width: 38,
+                                                          height: 38,
+                                                          display: 'flex',
+                                                          justifyContent: 'center',
+                                                          alignItems: 'center',
+                                                          padding: 0,
+                                                          opacity: user ? 1 : 0.45,
+                                                          background: 'rgba(255, 87, 34, 0.1)', // Light Orange bg
+                                                          color: '#ff0000',
+                                                          border: '2px solid #ff0000'
+                                                        }}
+                                                      >                                      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                                        <path d="M10 17l5-5-5-5" />
+                                        <path d="M15 12H3" />
+                                      </svg>
+                                    </button>
+                  
+                                                                          <button
+                                                                            className="btn"
+                                                                            type="button"
+                                                                            onClick={openSettingsPanel}
+                                                                            title="Settings"
+                                                                            aria-label="Settings"
+                                                                            aria-pressed={leftMode === 'settings'}
+                                                                            style={{
+                                                                              width: 38,
+                                                                              height: 38,
+                                                                              display: 'flex',
+                                                                              justifyContent: 'center',
+                                                                              alignItems: 'center',
+                                                                              padding: 0,
+                                                                              background: theme === 'light' ? '#fff' : '#27272a',
+                                                                              color: theme === 'light' ? '#000' : '#fff',
+                                                                              border: theme === 'light' ? '2px solid #000' : '2px solid #fff'
+                                                                            }}
+                                                                          >                                                                                                    <SettingsIcon size={32} />
 
-                  <button
-                    className="btn"
-                    type="button"
-                    onClick={openSettingsPanel}
-                    title="Settings"
-                    aria-label="Settings"
-                    aria-pressed={leftMode === 'settings'}
-                    style={{
-                      width: 38,
-                      height: 38,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      background: leftMode === 'settings' ? '#2a2a2c' : undefined
-                    }}
-                  >
-                    {/* 아이콘 크기를 28로 설정하여 버튼(38px)에 꽉 차게 만듦 */}
-                    <SettingsIcon size={38} />
-                  </button>
+                                                                                                  </button>
                 </div>
               )}
             </div>
@@ -1585,12 +1597,12 @@ function SettingsIcon({ size = 28 }) {
         </div>
 
         {/* Center panel */}
-        <div className="card scroll-hide center-panel" style={{ padding: 8, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="card scroll-hide center-panel" style={{ padding: 8, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 8, border: '2px solid var(--border)', background: 'var(--bg-panel)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1 }}>
-                  {activeDoc ? `${activeDoc.title} · ${activeDoc.filename}` : '선택된 문서 없음'}
+                  {activeDoc ? activeDoc.filename : '선택된 문서 없음'}
                 </div>
               </div>
                             <div
@@ -1601,11 +1613,11 @@ function SettingsIcon({ size = 28 }) {
                               <span style={{
                                 fontSize: 12,
                                 fontWeight: 700,
-                                color: '#cfcfd6',
+                                color: 'var(--text-main)',
                                 padding: '3px 8px',
                                 borderRadius: 8,
-                                border: '1px solid #2a2a2c',
-                                background: '#16161a'
+                                border: '1px solid var(--border)',
+                                background: 'var(--bg-card)'
                               }}>
                                 에이전트
                               </span>
@@ -1619,8 +1631,8 @@ function SettingsIcon({ size = 28 }) {
                                     left: 0,
                                     minWidth: 180,
                                     padding: 10,
-                                    border: '2px solid #2a2a2c',
-                                    background: '#0f0f12',
+                                    border: '2px solid var(--border)',
+                                    background: 'var(--bg-card)',
                                     zIndex: 60,
                                     boxShadow: '0 10px 28px rgba(0,0,0,0.45)'
                                   }}
@@ -1628,7 +1640,7 @@ function SettingsIcon({ size = 28 }) {
                                   <div style={{
                                     fontSize: 11,
                                     fontWeight: 700,
-                                    color: '#888',
+                                    color: 'var(--text-muted)',
                                     marginBottom: 8,
                                     textTransform: 'uppercase',
                                     letterSpacing: 0.5
@@ -1643,9 +1655,9 @@ function SettingsIcon({ size = 28 }) {
                                           height: 10,
                                           borderRadius: 3,
                                           background: ISSUE_COLORS[item.key] || ISSUE_COLORS.default,
-                                          border: '1px solid #444'
+                                          border: '1px solid var(--border)'
                                         }} />
-                                        <span className="mono" style={{ fontSize: 12, color: '#cfcfd6' }}>
+                                        <span className="mono" style={{ fontSize: 12, color: 'var(--text-main)' }}>
                                           {item.label}
                                         </span>
                                       </div>
@@ -1710,8 +1722,8 @@ function SettingsIcon({ size = 28 }) {
                       right: 0,
                       minWidth: 180,
                       padding: 8,
-                      border: '2px solid #2a2a2c',
-                      background: '#0f0f12',
+                      border: '2px solid var(--border)',
+                      background: 'var(--bg-card)',
                       zIndex: 50,
                       boxShadow: '0 10px 30px rgba(0,0,0,0.45)'
                     }}
@@ -1781,47 +1793,49 @@ function SettingsIcon({ size = 28 }) {
             )}
           </div>
 
-          {/* Draft input */}
-          <div className="card" style={{ padding: 12, background: '#141417', border: '3px solid #2a2a2c' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <div style={{ fontWeight: 700 }}>텍스트 입력</div>
-              <button
-                className="btn"
-                onClick={onSaveDraft}
-                disabled={isSavingDraft || isUploading || isAnalyzing}
-                style={{
-                  opacity: (isSavingDraft || isUploading || isAnalyzing) ? 0.7 : 1,
-                  cursor: (isSavingDraft || isUploading || isAnalyzing) ? 'not-allowed' : 'pointer',
-                }}
-                title={isSavingDraft ? '저장 중…' : '입력한 텍스트를 .txt로 저장'}
-              >
-                {isSavingDraft ? '저장 중…' : '저장'}
-              </button>
-            </div>
+          {/* Draft input - Only show when in upload mode */}
+          {leftMode === 'upload' && (
+            <div className="card" style={{ padding: 12, background: 'var(--bg-card)', border: '3px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontWeight: 700 }}>텍스트 입력</div>
+                <button
+                  className="btn"
+                  onClick={onSaveDraft}
+                  disabled={isSavingDraft || isUploading || isAnalyzing}
+                  style={{
+                    opacity: (isSavingDraft || isUploading || isAnalyzing) ? 0.7 : 1,
+                    cursor: (isSavingDraft || isUploading || isAnalyzing) ? 'not-allowed' : 'pointer',
+                  }}
+                  title={isSavingDraft ? '저장 중…' : '입력한 텍스트를 .txt로 저장'}
+                >
+                  {isSavingDraft ? '저장 중…' : '저장'}
+                </button>
+              </div>
 
-            <textarea
-              value={draftText}
-              onChange={(e) => setDraftText(e.target.value)}
-              placeholder="여기에 텍스트를 입력하고 [저장]을 누르면 .txt 원고로 저장됩니다."
-              className="mono"
-              style={{
-                width: '96%',
-                height: 140,
-                resize: 'vertical',
-                borderRadius: 8,
-                border: '1px solid #2a2a2c',
-                background: '#0f0f12',
-                color: '#e6e6ea',
-                padding: 10,
-                outline: 'none',
-                lineHeight: 1.5,
-                fontSize: 12
-              }}
-            />
-            <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>
-              저장 시 파일명은 자동으로 <span className="mono">draft_YYYYMMDD_HHMMSS.txt</span> 형태로 생성됩니다.
+              <textarea
+                value={draftText}
+                onChange={(e) => setDraftText(e.target.value)}
+                placeholder="여기에 텍스트를 입력하고 [저장]을 누르면 .txt 원고로 저장됩니다."
+                className="mono"
+                style={{
+                  width: '96%',
+                  height: 140,
+                  resize: 'vertical',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-panel)',
+                  color: 'var(--text-main)',
+                  padding: 10,
+                  outline: 'none',
+                  lineHeight: 1.5,
+                  fontSize: 12
+                }}
+              />
+              <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>
+                저장 시 파일명은 자동으로 <span className="mono">draft_YYYYMMDD_HHMMSS.txt</span> 형태로 생성됩니다.
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Right panel */}
@@ -1831,30 +1845,66 @@ function SettingsIcon({ size = 28 }) {
             padding: 8,
             overflow: isRightPanelOpen ? 'auto' : 'hidden',
             opacity: isRightPanelOpen ? 1 : 0,
-            transition: 'opacity 0.2s ease-in-out'
+            transition: 'opacity 0.2s ease-in-out',
+            border: '2px solid var(--border)',
+            background: 'var(--bg-sidebar)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>분석 결과</div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                {activeAnalysis ? `mode: ${mode}` : '분석을 실행하거나 기록을 선택하세요.'}
-              </div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>분석 결과</div>
+              {!activeAnalysis && (
+                <div className="muted" style={{ fontSize: 12 }}>
+                  분석을 실행하거나 기록을 선택하세요.
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {readerLevel && <Badge>독자 수준: {readerLevel}</Badge>}
 
-              {canShowJson && rightView === 'report' && (
-                <button className="btn" onClick={() => setRightView('json')} disabled={!activeAnalysis}>
-                  JSON 파일로 보기
-                </button>
-              )}
-
-              {canShowJson && rightView === 'json' && (
-                <button className="btn" onClick={() => setRightView('report')}> 
-                  돌아오기
-                </button>
+              {canShowJson && (
+                <>
+                  <button 
+                    className="btn" 
+                    style={{ 
+                      minWidth: 105, 
+                      padding: '8px 12px',
+                      background: rightView === 'report' ? 'var(--text-main)' : 'var(--bg-btn)',
+                      color: rightView === 'report' ? 'var(--bg-main)' : 'var(--text-main)'
+                    }} 
+                    onClick={() => setRightView('report')} 
+                    disabled={!activeAnalysis}
+                  >
+                    요약 보기
+                  </button>
+                  <button 
+                    className="btn" 
+                    style={{ 
+                      minWidth: 105, 
+                      padding: '8px 12px',
+                      background: rightView === 'chat' ? 'var(--text-main)' : 'var(--bg-btn)',
+                      color: rightView === 'chat' ? 'var(--bg-main)' : 'var(--text-main)'
+                    }} 
+                    onClick={() => setRightView('chat')} 
+                    disabled={!activeAnalysis}
+                  >
+                    대화 보기
+                  </button>
+                  <button 
+                    className="btn" 
+                    style={{ 
+                      minWidth: 105, 
+                      padding: '8px 12px',
+                      background: rightView === 'json' ? 'var(--text-main)' : 'var(--bg-btn)',
+                      color: rightView === 'json' ? 'var(--bg-main)' : 'var(--text-main)'
+                    }} 
+                    onClick={() => setRightView('json')} 
+                    disabled={!activeAnalysis}
+                  >
+                    JSON
+                  </button>
+                </>
               )}
 
             </div>
@@ -1872,10 +1922,7 @@ function SettingsIcon({ size = 28 }) {
               {rightView === 'report' && (
                 <>
                   {reportMarkdown ? (
-                    <div className="card" style={{ padding: 16, background: '#202022', marginBottom: 12 }}>
-                      <div style={{ fontWeight: 700, marginBottom: 12, borderBottom: '1px solid #444', paddingBottom: 8, fontSize: 14 }}>
-                        📝 종합 분석 리포트 (Chief Editor)
-                      </div>
+                    <div className="card" style={{ padding: 16, background: 'var(--bg-card)', marginBottom: 12 }}>
                       <div className="markdown-body" style={{ fontSize: 14, lineHeight: 1.6 }}>
                         <ReactMarkdown>{reportMarkdown}</ReactMarkdown>
                       </div>
@@ -1897,6 +1944,64 @@ function SettingsIcon({ size = 28 }) {
                   <pre className="mono" style={{ whiteSpace: 'pre-wrap', fontSize: 12, lineHeight: 1.5 }}>
                     {pretty(activeAnalysis.result)}
                   </pre>
+                </div>
+              )}
+
+              {rightView === 'chat' && (
+                <div className="card" style={{ padding: 12 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 12, borderBottom: '1px solid #444', paddingBottom: 8 }}>
+                    🤖 에이전트 작업 로그 (Agent Chat)
+                  </div>
+                  {/* TODO: Connect to real-time agent logs from backend */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ 
+                      alignSelf: 'flex-start', 
+                      background: 'var(--bg-sidebar)', 
+                      padding: '8px 12px', 
+                      borderRadius: '12px 12px 12px 0', 
+                      maxWidth: '85%', 
+                      fontSize: 13,
+                      border: '1px solid var(--border)'
+                    }}>
+                      <strong>System</strong>: 분석 파이프라인을 가동합니다.
+                    </div>
+                    <div style={{ 
+                      alignSelf: 'flex-end', 
+                      background: 'var(--bg-card)', 
+                      padding: '8px 12px', 
+                      borderRadius: '12px 12px 0 12px', 
+                      maxWidth: '85%', 
+                      fontSize: 13,
+                      border: '1px solid var(--border)'
+                    }}>
+                      <strong>SummaryAgent</strong>: 원고 전체 요약을 시작합니다...
+                    </div>
+                    <div style={{ 
+                      alignSelf: 'flex-start', 
+                      background: 'var(--bg-sidebar)', 
+                      padding: '8px 12px', 
+                      borderRadius: '12px 12px 12px 0', 
+                      maxWidth: '85%', 
+                      fontSize: 13,
+                      border: '1px solid var(--border)'
+                    }}>
+                      <strong>ToneAgent</strong>: 문체 분석을 위해 텍스트 청크를 수신했습니다.
+                    </div>
+                    <div style={{ 
+                      alignSelf: 'flex-start', 
+                      background: 'var(--bg-sidebar)', 
+                      padding: '8px 12px', 
+                      borderRadius: '12px 12px 12px 0', 
+                      maxWidth: '85%', 
+                      fontSize: 13,
+                      border: '1px solid var(--border)'
+                    }}>
+                      <strong>SafetyGuard</strong>: 트라우마/혐오 표현 검사 완료. (Found: 0)
+                    </div>
+                     <div className="muted" style={{ fontSize: 12, textAlign: 'center', marginTop: 10 }}>
+                      ... 실시간 로그 연동 준비 중 ...
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -1922,10 +2027,10 @@ function SettingsIcon({ size = 28 }) {
             className="card"
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: 'min(520px, 94vw)',
+              width: 'min(380px, 94vw)',
               padding: 16,
-              border: '2px solid #2a2a2c',
-              background: '#0f0f12',
+              border: '2px solid var(--border)',
+              background: 'var(--bg-panel)',
               boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
             }}
           >
@@ -1951,13 +2056,13 @@ function SettingsIcon({ size = 28 }) {
                     return <div className="muted" style={{ fontSize: 12 }}>분석 기록이 없습니다.</div>
                   }
                   return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
                       {items.map(item => {
                         const labelTitle = historyDoc?.title
                           ? `${historyDoc.title} · ${item.id}`
                           : item.id
                         return (
-                          <div key={item.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <div key={item.id} style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%' }}>
                             <button
                               className="btn"
                               onClick={() => onSelectDocAnalysis(docHistoryOpenId, item.id)}
@@ -1966,27 +2071,20 @@ function SettingsIcon({ size = 28 }) {
                                 minWidth: 0,
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'flex-start',
+                                justifyContent: 'center',
                                 gap: 12,
-                                textAlign: 'left',
-                                background: activeAnalysis?.id === item.id ? '#1b1b1f' : undefined
+                                textAlign: 'center',
+                                background: activeAnalysis?.id === item.id ? 'var(--bg-hover)' : undefined
                               }}
                             >
-                              {/* ✅ historyLabel 미정의 버그 수정: item.id 표시 */}
                               <span
-                                title={labelTitle}
                                 style={{
                                   fontSize: 12,
-                                  flex: '0 0 50%',
-                                  maxWidth: '50%',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
+                                  color: '#000',
+                                  fontWeight: 700,
                                   whiteSpace: 'nowrap'
                                 }}
                               >
-                                {item.id}
-                              </span>
-                              <span className="muted" style={{ fontSize: 12, marginLeft: 'auto', whiteSpace: 'nowrap', textAlign: 'right' }}>
                                 {formatDisplayTimestamp(item.created_at)}
                               </span>
                             </button>
@@ -2000,19 +2098,19 @@ function SettingsIcon({ size = 28 }) {
                               }}
                               disabled={loading || isAnalyzing || isSavingDraft || isUploading}
                               style={{
-                                padding: '2px 6px',
-                                minWidth: 28,
-                                height: 28,
+                                padding: 0,
+                                minWidth: 40,
+                                height: 36,
                                 display: 'grid',
                                 placeItems: 'center',
-                                background: '#1a0f10',
-                                border: '1px solid rgba(239, 83, 80, 0.55)',
+                                background: 'rgba(239, 83, 80, 0.15)',
+                                border: '2px solid #ef5350',
                                 color: '#ef5350'
                               }}
                               title="분석 삭제"
                               aria-label="분석 삭제"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path
                                   d="M4 7h16M9 7v-2.2c0-.7.6-1.3 1.3-1.3h3.4c.7 0 1.3.6 1.3 1.3V7M9.5 11.5v6M14.5 11.5v6M6.5 7l1 13.2c.1 1 1 1.8 2 1.8h5c1 0 1.9-.8 2-1.8L17.5 7"
                                   stroke="currentColor"

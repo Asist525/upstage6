@@ -16,13 +16,14 @@ class SpellingAgent(BaseAgent):
         _, sentences = extract_split_payload(split_payload)
         
         all_issues = []
-        chunk_size = 50  # 한 번에 분석할 문장 수
+        scores = []
+        chunk_size = 30  # 한 번에 분석할 문장 수 (속도 개선을 위해 축소)
         
         chunks = []
         for i in range(0, len(sentences), chunk_size):
             chunks.append((sentences[i:i + chunk_size], i))
             
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:  # 병렬 처리 수 확대
             futures = [
                 executor.submit(self._analyze_chunk, chunk, idx)
                 for chunk, idx in chunks
@@ -31,16 +32,25 @@ class SpellingAgent(BaseAgent):
             for future in as_completed(futures):
                 try:
                     res = future.result()
-                    if res and "issues" in res:
-                        all_issues.extend(res["issues"])
+                    if res:
+                        if "issues" in res:
+                            all_issues.extend(res["issues"])
+                        if "score" in res and isinstance(res["score"], (int, float)):
+                            scores.append(res["score"])
                 except Exception as e:
                     # 개별 청크 실패 시 로그만 남기고 전체 중단 방지
                     print(f"[SpellingAgent] Chunk failed: {e}")
 
         # 정렬: 문장 인덱스 순
         all_issues.sort(key=lambda x: x.get("sentence_index", -1))
+        
+        # 전체 점수 계산 (평균)
+        final_score = 100
+        if scores:
+            final_score = int(sum(scores) / len(scores))
             
         return {
+            "score": final_score,
             "issues": all_issues,
             "note": f"Analyzed {len(sentences)} sentences in {len(chunks)} chunks (Parallel)"
         }
@@ -70,9 +80,11 @@ class SpellingAgent(BaseAgent):
 3. **목표**:
    - 과도한 지적을 지양하고, 작가가 실수한 것으로 보이는 부분만 집어낼 것.
    - 애매하면 지적하지 말 것.
+   - 해당 청크의 맞춤법 정확도를 0~100점 점수로 평가할 것. (오류가 없으면 100점)
 
 출력 형식(JSON):
 {{
+  "score": <int 0-100>,
   "issues": [
     {{
       "issue_type": "spelling | spacing | particle",
