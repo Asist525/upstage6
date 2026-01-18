@@ -1,3 +1,4 @@
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -17,9 +18,9 @@ class Settings(BaseSettings):
     langsmith_tracing: bool = False
 
     # Auth
-    google_client_id: str | None = None
-    google_client_secret: str | None = None
-    secret_key: str = "temporary_secret_key_for_development"
+    google_client_id: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_ID")
+    google_client_secret: str | None = Field(default=None, validation_alias="GOOGLE_CLIENT_SECRET")
+    secret_key: str = Field(default="temporary_secret_key_for_development", validation_alias="SECRET_KEY")
     access_token_expire_minutes: int = 60 * 24 * 7  # 1 week
 
     # Analysis feature flags (default enabled)

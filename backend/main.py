@@ -1,14 +1,15 @@
 from contextlib import asynccontextmanager
 import logging
 import time
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Load environment variables FIRST before any other app imports
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.webapi.routes import router as api_router
 from app.core.settings import get_settings
 from app.core.db import init_db
