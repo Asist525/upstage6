@@ -36,13 +36,15 @@ def get_google_oauth():
 @router.get("/login")
 async def login(request: Request):
     google = get_google_oauth()
+    
+    # redirect_uri를 생성할 때 강제로 https를 사용하도록 설정
     redirect_uri = request.url_for('auth_callback')
     
-    # Cloudflare나 프록시를 통해 HTTPS로 접속했을 경우 리디렉션 주소도 https로 변경
-    if 'https' in str(request.base_url) or request.headers.get('x-forwarded-proto') == 'https':
-        redirect_uri = str(redirect_uri).replace("http://", "https://")
+    # 항상 https로 강제 변환 (Cloudflare 환경 대응)
+    redirect_uri = str(redirect_uri).replace("http://", "https://")
     
-    return await google.authorize_redirect(request, str(redirect_uri))
+    print(f"DEBUG: Using redirect_uri: {redirect_uri}")
+    return await google.authorize_redirect(request, redirect_uri)
 
 @router.get("/callback", name="auth_callback")
 async def auth_callback(request: Request, session: AsyncSession = Depends(get_session)):
