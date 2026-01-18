@@ -25,8 +25,11 @@ oauth.register(
 @router.get("/login")
 async def login(request: Request):
     redirect_uri = request.url_for('auth_callback')
-    # For local development, if request.url_for is http but we need https, we might need to adjust.
-    # But usually http is fine for localhost.
+    
+    # Cloudflare나 프록시를 통해 HTTPS로 접속했을 경우 리디렉션 주소도 https로 변경
+    if 'https' in str(request.base_url) or request.headers.get('x-forwarded-proto') == 'https':
+        redirect_uri = str(redirect_uri).replace("http://", "https://")
+    
     return await oauth.google.authorize_redirect(request, str(redirect_uri))
 
 @router.get("/callback", name="auth_callback")
