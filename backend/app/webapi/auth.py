@@ -48,44 +48,64 @@ async def login(request: Request):
 
 @router.get("/callback", name="auth_callback")
 async def auth_callback(request: Request, session: AsyncSession = Depends(get_session)):
+    import logging
+    logger = logging.getLogger("app.auth")
     google = get_google_oauth()
     try:
+        logger.info("Starting OAuth callback processing")
         token = await google.authorize_access_token(request)
+        logger.info("OAuth token received successfully")
     except Exception as e:
-        print(f"OAuth error: {e}")
-        raise HTTPException(status_code=400, detail="OAuth authorization failed")
+        logger.exception("OAuth authorization failed at token exchange")
+        raise HTTPException(status_code=400, detail=f"OAuth authorization failed: {str(e)}")
         
     user_info = token.get('userinfo')
     if not user_info:
+        logger.error("Failed to get userinfo from token")
         raise HTTPException(status_code=400, detail="Failed to get user info from Google")
 
     email = user_info.get('email')
     name = user_info.get('name')
     picture = user_info.get('picture')
+    logger.info(f"Processing login for user: {email}")
 
-    async with session as s:
-        # Check if user exists
-        result = await s.execute(select(User).where(User.email == email))
-        user = result.scalar_one_or_none()
+    try:
+        async with session as s:
+            # Check if user exists
+            result = await s.execute(select(User).where(User.email == email))
+            user = result.scalar_one_or_none()
 
-        if not user:
-            # Create new user
-            user = User(
-                id=str(uuid.uuid4()),
-                email=email,
-                name=name,
-                picture=picture
-            )
-            s.add(user)
-            await s.commit()
-            await s.refresh(user)
+            if not user:
+                logger.info(f"Creating new user in DB: {email}")
+                # Create new user
+                user = User(
+                    id=str(uuid.uuid4()),
+                    email=email,
+                    name=name,
+                    picture=picture
+                )
+                s.add(user)
+                await s.commit()
+                await s.refresh(user)
+            else:
+                logger.info(f"Existing user found: {email}")
+    except Exception as e:
+        logger.exception("Database operation failed during user login/creation")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-    # Generate JWT
-    access_token = create_access_token(data={"sub": user.id})
-    
-    # Redirect to frontend with token
-    frontend_url = f"{settings.frontend_origin}?token={access_token}"
-    return RedirectResponse(url=frontend_url)
+    try:
+        # Generate JWT
+        access_token = create_access_token(data={"sub": user.id})
+        logger.info("JWT token generated successfully")
+        
+        # Redirect to frontend with token
+        settings = get_settings()
+        frontend_url = f"{settings.frontend_origin}?token={access_token}"
+        logger.info(f"Redirecting to frontend: {frontend_url}")
+        return RedirectResponse(url=frontend_url)
+    except Exception as e:
+        logger.exception("JWT generation or redirection failed")
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
