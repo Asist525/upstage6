@@ -1,3 +1,4 @@
+import os
 import uuid
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import RedirectResponse
@@ -12,11 +13,19 @@ router = APIRouter()
 
 def get_google_oauth():
     settings = get_settings()
+    
+    # [CRITICAL FIX] Pydantic이 못 읽을 경우를 대비해 직접 OS 환경 변수 확인
+    client_id = settings.google_client_id or os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = settings.google_client_secret or os.getenv("GOOGLE_CLIENT_SECRET")
+    
+    if not client_id:
+        print("CRITICAL ERROR: GOOGLE_CLIENT_ID is still None!")
+    
     _oauth = OAuth()
     _oauth.register(
         name='google',
-        client_id=settings.google_client_id,
-        client_secret=settings.google_client_secret,
+        client_id=client_id,
+        client_secret=client_secret,
         server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
         client_kwargs={
             'scope': 'openid email profile'
