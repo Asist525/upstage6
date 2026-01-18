@@ -9,6 +9,13 @@ services:
       - "8000"
     volumes:
       - ./backend/data:/app/data
+    # Portainer에서 입력한 환경 변수를 컨테이너 내부로 명시적으로 연결
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN}
+      - SECRET_KEY=${SECRET_KEY}
+      - UPSTAGE_API_KEY=${UPSTAGE_API_KEY}
     restart: always
 
   frontend:

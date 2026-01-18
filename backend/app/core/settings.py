@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", 
+        env_file=None, # Docker 환경에서는 .env 파일을 읽지 않도록 설정
         extra="ignore",
         env_prefix="",
         case_sensitive=False

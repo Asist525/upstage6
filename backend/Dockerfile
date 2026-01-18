@@ -18,8 +18,11 @@ COPY pyproject.toml uv.lock* ./
 # Install dependencies
 RUN uv pip install --system -e .
 
-# Copy application code
+# Copy application code (except what's in .dockerignore)
 COPY . .
+
+# Ensure .env is NOT in the image to prevent overriding Docker env vars
+RUN rm -f .env
 
 # Create directory for data and uploads
 RUN mkdir -p data/uploads
