@@ -19,34 +19,34 @@ class CausalityEvaluatorAgent(BaseAgent):
     name = "causality_agent"
 
     def run(self, split_payload: object, global_summary: str | None = None, persona: dict | None = None) -> dict:
-        
-        persona_text = ""
-        knowledge_level = "중급" # Default fallback
-        
-        if persona:
-            # 페르소나 정보를 기반으로 독자 수준 추론 (단순 매핑)
-            age = str(persona.get('age', ''))
-            job = persona.get('job', '')
-            # 예시 로직: 10대 이하면 초급, 전문직이면 고급 등 (여기선 단순 텍스트로 전달)
+        try:
+            persona_text = ""
+            knowledge_level = "중급" # Default fallback
             
-            persona_text = f"""
-            [독자 페르소나]
-            - 나이/직업: {age} / {job}
-            - 성향: {persona.get('trait', '정보 없음')}
-            - 독서 취향: {persona.get('preference', '정보 없음')}
-            
-            위 독자가 이 글을 읽는다고 가정하고 평가하라.
-            """
+            if persona:
+                # 페르소나 정보를 기반으로 독자 수준 추론 (단순 매핑)
+                age = str(persona.get('age', ''))
+                job = persona.get('job', '')
+                # 예시 로직: 10대 이하면 초급, 전문직이면 고급 등 (여기선 단순 텍스트로 전달)
+                
+                persona_text = f"""
+                [독자 페르소나]
+                - 나이/직업: {age} / {job}
+                - 성향: {persona.get('trait', '정보 없음')}
+                - 독서 취향: {persona.get('preference', '정보 없음')}
+                
+                위 독자가 이 글을 읽는다고 가정하고 평가하라.
+                """
 
-        system = """
+            system = """
 You are a strict JSON generator.
 You MUST output valid JSON only.
 Do NOT include explanations or markdown.
 """
 
-        split_context = format_split_payload(split_payload)
+            split_context = format_split_payload(split_payload)
 
-        prompt = f"""
+            prompt = f"""
 다음은 원고의 문장 목록이다.
 
 너의 역할은 '인과관계 분석가'이다.
@@ -95,5 +95,12 @@ Do NOT include explanations or markdown.
 {split_context}
 """
 
-        response = chat(prompt, system=system)
-        return self._safe_json_load(response)
+            response = chat(prompt, system=system)
+            return self._safe_json_load(response)
+        except Exception as e:
+            return {
+                "issues": [],
+                "note": "Causality analysis failed",
+                "error": str(e),
+                "score": 0
+            }

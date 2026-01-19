@@ -23,82 +23,90 @@ class ToneEvaluatorAgent(BaseAgent):
     name = "tone-evaluator"
 
     def run(self, split_payload: object, global_summary: str | None = None, persona: dict | None = None) -> dict:
-        system = """
-        너는 JSON 출력 전용 엔진이다.
-        반드시 유효한 JSON만 출력해야 한다.
-        설명, 마크다운, 주석, 일반 텍스트를 절대 포함하지 마라.
-        JSON 이외의 어떠한 문자열도 출력해서는 안 된다.
-        """
-
-        split_context = format_split_payload(split_payload)
-        
-        persona_text = ""
-        if persona:
-            persona_text = f"""
-            [독자 페르소나]
-            - 나이/직업: {persona.get('age', '미상')} / {persona.get('job', '미상')}
-            - 성향: {persona.get('trait', '정보 없음')}
-            - 독서 취향: {persona.get('preference', '정보 없음')}
-            
-            위 독자가 이 글을 읽는다고 가정하고 평가하라.
+        try:
+            system = """
+            너는 JSON 출력 전용 엔진이다.
+            반드시 유효한 JSON만 출력해야 한다.
+            설명, 마크다운, 주석, 일반 텍스트를 절대 포함하지 마라.
+            JSON 이외의 어떠한 문자열도 출력해서는 안 된다.
             """
 
-        prompt = f"""
-        다음은 원고의 문장 목록이다.
+            split_context = format_split_payload(split_payload)
+            
+            persona_text = ""
+            if persona:
+                persona_text = f"""
+                [독자 페르소나]
+                - 나이/직업: {persona.get('age', '미상')} / {persona.get('job', '미상')}
+                - 성향: {persona.get('trait', '정보 없음')}
+                - 독서 취향: {persona.get('preference', '정보 없음')}
+                
+                위 독자가 이 글을 읽는다고 가정하고 평가하라.
+                """
 
-        너의 역할은 '말투 분석 에이전트'이다.
+            prompt = f"""
+            다음은 원고의 문장 목록이다.
 
-        [전체 맥락 요약 (참조용)]
-        {global_summary or "제공되지 않음"}
-        
-        {persona_text}
+            너의 역할은 '말투 분석 에이전트'이다.
 
-        너의 임무:
-        1. 문체와 서술 방식이 독자의 몰입을 방해하는지 분석하여 '이슈'를 식별하라.
-        2. 글 전체의 문체 완성도와 독자 적합성을 0~100점 사이의 점수('score')로 평가하라.
+            [전체 맥락 요약 (참조용)]
+            {global_summary or "제공되지 않음"}
+            
+            {persona_text}
 
-        반드시 지켜야 할 규칙:
-        - 모든 설명(reason, note)은 반드시 한국어로 작성하라.
-        - 문장을 수정하거나 대체 표현을 제안하지 말 것
-        - 오직 '독자 관점에서 개연성이 약해지는 말투 지점'만 식별할 것
-        - [전체 맥락 요약]을 참고하여, 인물의 말투가 상황이나 설정에 어긋나는지 확인하라.
+            너의 임무:
+            1. 문체와 서술 방식이 독자의 몰입을 방해하는지 분석하여 '이슈'를 식별하라.
+            2. 글 전체의 문체 완성도와 독자 적합성을 0~100점 사이의 점수('score')로 평가하라.
 
-        분석 기준 (개연성 중심):
-        - 말투 변화가 맥락 없이 발생하는 지점
-        - 감정 톤이 사건 전개와 어긋나는 부분
-        - 독자 입장에서 설명 없이 받아들이기 어려운 어조
-        - 말투 때문에 인과관계가 암묵적으로 생략된 느낌을 주는 부분
-        - 독자 수준 대비 과도하거나 부족한 서술
+            반드시 지켜야 할 규칙:
+            - 모든 설명(reason, note)은 반드시 한국어로 작성하라.
+            - 문장을 수정하거나 대체 표현을 제안하지 말 것
+            - 오직 '독자 관점에서 개연성이 약해지는 말투 지점'만 식별할 것
+            - [전체 맥락 요약]을 참고하여, 인물의 말투가 상황이나 설정에 어긋나는지 확인하라.
 
-        출력 형식(JSON):
-        {{
-          "score": <int 0-100, 독자가 느끼는 문체의 자연스러움 및 몰입도 점수>,
-          "issues": [
+            분석 기준 (개연성 중심):
+            - 말투 변화가 맥락 없이 발생하는 지점
+            - 감정 톤이 사건 전개와 어긋나는 부분
+            - 독자 입장에서 설명 없이 받아들이기 어려운 어조
+            - 말투 때문에 인과관계가 암묵적으로 생략된 느낌을 주는 부분
+            - 독자 수준 대비 과도하거나 부족한 서술
+
+            출력 형식(JSON):
             {{
-              "issue_type": "tone_shift | tone_mismatch | register_mismatch",
-              "severity": "low | medium | high",
-              "sentence_index": 0,
-              "char_start": 0,
-              "char_end": 0,
-              "quote": "문제 구간 원문 인용",
-              "reason": "개연성 관점의 문제 요약 (한국어로 작성)",
-              "confidence": 0.0
+              "score": <int 0-100, 독자가 느끼는 문체의 자연스러움 및 몰입도 점수>,
+              "issues": [
+                {{
+                  "issue_type": "tone_shift | tone_mismatch | register_mismatch",
+                  "severity": "low | medium | high",
+                  "sentence_index": 0,
+                  "char_start": 0,
+                  "char_end": 0,
+                  "quote": "문제 구간 원문 인용",
+                  "reason": "개연성 관점의 문제 요약 (한국어로 작성)",
+                  "confidence": 0.0
+                }}
+              ],
+              "note": "말투 전반에서 관찰된 독자 인지 흐름 특성 요약 - 한국어로 작성 (선택)"
             }}
-          ],
-          "note": "말투 전반에서 관찰된 독자 인지 흐름 특성 요약 - 한국어로 작성 (선택)"
-        }}
 
-        규칙:
-        - sentence_index는 문장 목록 JSON 배열의 인덱스다.
-        - char_start/end는 해당 문장 내 0-based 위치다.
-        - quote는 반드시 해당 문장에 존재하는 원문 그대로 사용한다.
+            규칙:
+            - sentence_index는 문장 목록 JSON 배열의 인덱스다.
+            - char_start/end는 해당 문장 내 0-based 위치다.
+            - quote는 반드시 해당 문장에 존재하는 원문 그대로 사용한다.
 
-        문장 목록:
-        {split_context}
-        """
+            문장 목록:
+            {split_context}
+            """
 
-        response = chat(prompt, system=system)
-        return self._safe_json_load(response)
+            response = chat(prompt, system=system)
+            return self._safe_json_load(response)
+        except Exception as e:
+            return {
+                "issues": [],
+                "note": "Tone analysis failed",
+                "error": str(e),
+                "score": 0
+            }
 
     def _safe_json_load(self, text: str) -> dict:
         """

@@ -89,7 +89,7 @@ class SpellingAgent(BaseAgent):
     {{
       "issue_type": "spelling | spacing | particle",
       "severity": "low | medium | high",
-      "sentence_index": {start_index} + index,
+      "sentence_index": <int: {start_index} + relative_index>,
       "char_start": 0,
       "char_end": 0,
       "quote": "오류가 있는 단어 또는 어절",

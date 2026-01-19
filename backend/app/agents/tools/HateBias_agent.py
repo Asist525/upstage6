@@ -79,7 +79,7 @@ You are a strict JSON generator. You MUST output valid JSON only.
     {{
       "issue_type": "bias | hate | stereotype",
       "severity": "low | medium | high",
-      "sentence_index": {start_index} + index,
+      "sentence_index": <int: {start_index} + relative_index>,
       "char_start": 0,
       "char_end": 0,
       "quote": "문제 구간 원문 인용",
