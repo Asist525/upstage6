@@ -139,7 +139,7 @@ function HighlightedText({ text, analysisResult, setTooltip }) {
                   textTransform: 'capitalize',
                   color: ISSUE_COLORS[agent] ? '#fff' : '#000',
                   background: ISSUE_COLORS[agent] || 'transparent',
-                  padding: '1px 4px',
+                  //padding: '1px 4px',
                   borderRadius: 3,
                   marginRight: 4
                 }}>{agent}</strong>
@@ -203,7 +203,7 @@ function HighlightedText({ text, analysisResult, setTooltip }) {
   collect(analysisResult.hate_bias, 'hate_bias')
   collect(analysisResult.genre_cliche, 'genre_cliche')
   collect(analysisResult.spelling, 'spelling')
-  collect(analysisResult.tension_curve, 'tension')
+  collect(analysisResult.tension, 'tension')
 
   const handleMouseEnterSimple = (e, issue, borderColor) => {
     const content = (
@@ -434,10 +434,6 @@ export default function App() {
   const [personaCount, setPersonaCount] = useState(3)
   const [creativeFocus, setCreativeFocus] = useState(true)
   const [topic, setTopic] = useState('소설')
-  // const [theme, setTheme] = useState(() => {
-  //   const saved = localStorage.getItem('theme')
-  //   return saved === 'light' ? 'light' : 'dark'
-  // })
   const theme = 'light'
 
   const [toasts, setToasts] = useState([])
@@ -600,8 +596,6 @@ export default function App() {
 
       if (fileRef.current) fileRef.current.value = ''
       if (uploaderFileRef.current) uploaderFileRef.current.value = ''
-
-      pushToast('업로드가 완료되었습니다.', 'success')
     } catch (e2) {
       setError(String(e2))
     } finally {
@@ -899,12 +893,6 @@ export default function App() {
     setError(null)
   }
 
-  function openSettingsPanel() {
-    setLeftMode(prev => (prev === 'settings' ? 'list' : 'settings'))
-    setIsDragOver(false)
-    setError(null)
-  }
-
   function closeLeftPanelToList() {
     if (isUploading) return
     setLeftMode('list')
@@ -941,20 +929,6 @@ export default function App() {
     await uploadOneFile(file)
   }
 
-function SettingsIcon({ size = 28 }) {
-  return (
-
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" strokeWidth="1.6" />
-      <path
-        d="M19.4 13.5a7.5 7.5 0 0 0 0-3l2-1.55-2-3.46-2.36.98a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.44 2.97a7.6 7.6 0 0 0-2.6 1.5L4.6 5.49l-2 3.46 2 1.55a7.5 7.5 0 0 0 0 3l-2 1.55 2 3.46 2.36-.98a7.6 7.6 0 0 0 2.6 1.5L10 22h4l.44-2.97a7.6 7.6 0 0 0 2.6-1.5l2.36.98 2-3.46-2-1.55Z"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 
   // toggle sizes
@@ -1019,6 +993,34 @@ function SettingsIcon({ size = 28 }) {
     pushToast('docx로 저장했습니다.', 'success')
   }
 
+  function exportAsHwp() {
+    const text = (activeDoc?.extracted_text || '').trim()
+    if (!text) {
+      pushToast('내보낼 텍스트가 없습니다.', 'warning')
+      return
+    }
+
+    // HWP 호환 HTML 구조 생성
+    const htmlContent = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Hangeul', 'Malgun Gothic', serif; line-height: 1.6; }
+  p { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+${text.split(/\r?\n/).map(line => `<p>${line || '&nbsp;'}</p>`).join('\n')}
+</body>
+</html>`
+
+    const blob = new Blob([htmlContent], { type: 'application/x-hwp' })
+    const filename = `${docTitleBase}_${makeTimestampName('export')}.hwp`
+    downloadBlob(blob, filename)
+    pushToast('hwp로 저장했습니다.', 'success')
+  }
+
   function onDownloadEnter() {
     if (downloadCloseTimer.current) {
       clearTimeout(downloadCloseTimer.current)
@@ -1057,21 +1059,40 @@ function SettingsIcon({ size = 28 }) {
       }} />}
       <Tooltip visible={tooltip.visible} content={tooltip.content} position={{ x: tooltip.x, y: tooltip.y }} borderColor={tooltip.borderColor} />
       <style>{`
+        html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important; /* 가로, 세로 모두 숨김 */
+        touch-action: none; /* 모바일 환경 스크롤 방지 */
+        }
         body {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
         }
         body::-webkit-scrollbar {
-          width: 0;
-          height: 0;
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
         }
         .scroll-hide {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
         }
         .scroll-hide::-webkit-scrollbar {
-          width: 0;
-          height: 0;
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
+        }
+        #editor-container {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        #editor-container::-webkit-scrollbar {
+          width: 0 !important;
+          height: 0 !important;
+          display: none !important;
+          background: transparent !important;
         }
         .account-bar {
           width: 100%;
@@ -1173,10 +1194,14 @@ function SettingsIcon({ size = 28 }) {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
       <div className="scroll-hide main-layout" style={{
         display: 'grid',
-        gridTemplateColumns: `300px 1fr ${isRightPanelOpen ? '600px' : '0px'}`,
+        gridTemplateColumns: `300px 1fr ${isRightPanelOpen ? '600px' : '0px'} `,
         height: '100vh',
         gap: 8,
         background: 'var(--bg-main)',
@@ -1337,54 +1362,30 @@ function SettingsIcon({ size = 28 }) {
               </div>
             )}
 
-            {/* Settings panel - Popover style */}
-            {leftMode === 'settings' && (
-              <div
-                className="card"
-                style={{
-                  position: 'absolute',
-                  bottom: 70, // Account bar height + margin
-                  left: 12,
-                  right: 12,
-                  zIndex: 100,
-                  padding: 14,
-                  minHeight: 200,
-                  border: '3px solid var(--border)',
-                  background: 'var(--bg-panel)',
-                  boxShadow: '0 -4px 20px rgba(0,0,0,0.2)',
-                  animation: 'slideUp 0.2s ease-out'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                   <div style={{ fontWeight: 800, fontSize: 16 }}>설정</div>
-                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-                </div>
-              </div>
-            )}
-
-            {/* List panel - Always visible if list or settings (behind settings) */}
-            {(leftMode === 'list' || leftMode === 'settings') && (
+            {/* List panel - Always visible if list */}
+            {(leftMode === 'list') && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <div className="muted" style={{ fontSize: 12 }}>원고 목록</div>
-                  <button 
-                    onClick={onCreateNewDoc}
-                    className="btn"
-                    style={{ 
-                      padding: '2px 8px', 
-                      fontSize: 18, 
-                      fontWeight: 800, 
-                      lineHeight: 1,
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)'
-                    }}
-                    title="새 원고 생성"
-                  >
-                    +
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-main)' }}>새 원고</span>
+                    <button 
+                      onClick={onCreateNewDoc}
+                      className="btn"
+                      style={{ 
+                        padding: '2px 8px', 
+                        fontSize: 18, 
+                        fontWeight: 800, 
+                        lineHeight: 1,
+                        background: 'var(--bg-card)',
+                        border: '2px solid var(--border)'
+                      }}
+                      title="새 원고 생성"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 {docs.map(d => (
                   <div key={d.id} style={{ marginBottom: 12 }}>
@@ -1413,7 +1414,7 @@ function SettingsIcon({ size = 28 }) {
                     </div>
 
                     {docScoreOpenId === d.id && (
-                      <div className="card" style={{ marginTop: 8, padding: 10, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+                      <div className="card" style={{ marginTop: 8, padding: 10, border: '2px solid black', background: 'var(--bg-card)', animation: 'slideDown 0.25s ease-out' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-main)' }}>
                             문서 점수 요약
@@ -1635,28 +1636,7 @@ function SettingsIcon({ size = 28 }) {
                                         <path d="M15 12H3" />
                                       </svg>
                                     </button>
-                  
-                                                                          <button
-                                                                            className="btn"
-                                                                            type="button"
-                                                                            onClick={openSettingsPanel}
-                                                                            title="Settings"
-                                                                            aria-label="Settings"
-                                                                            aria-pressed={leftMode === 'settings'}
-                                                                            style={{
-                                                                              width: 38,
-                                                                              height: 38,
-                                                                              display: 'flex',
-                                                                              justifyContent: 'center',
-                                                                              alignItems: 'center',
-                                                                              padding: 0,
-                                                                              background: '#fff',
-                                                                              color: '#000',
-                                                                              border: '2px solid #000'
-                                                                            }}
-                                                                          >                                                                                                    <SettingsIcon size={32} />
 
-                                                                                                  </button>
                 </div>
               )}
             </div>
@@ -1687,6 +1667,7 @@ function SettingsIcon({ size = 28 }) {
                 isAnalyzing={isAnalyzing}
                 onExportTxt={exportAsTxt}
                 onExportDocx={exportAsDocx}
+                onExportHwp={exportAsHwp}
                 onToggleRightPanel={() => setIsRightPanelOpen(prev => !prev)}
               />
             ) : (
@@ -1907,7 +1888,7 @@ function SettingsIcon({ size = 28 }) {
               width: 'min(380px, 94vw)',
               padding: 16,
               border: '2px solid var(--border)',
-              background: 'var(--bg-panel)',
+              background: '#fff',
               boxShadow: '0 20px 40px rgba(0,0,0,0.5)'
             }}
           >
