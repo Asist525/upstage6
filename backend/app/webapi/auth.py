@@ -37,11 +37,16 @@ def get_google_oauth():
 async def login(request: Request):
     google = get_google_oauth()
     
-    # redirect_uri를 생성할 때 강제로 https를 사용하도록 설정
+    # redirect_uri를 생성
     redirect_uri = request.url_for('auth_callback')
     
-    # 항상 https로 강제 변환 (Cloudflare 환경 대응)
-    redirect_uri = str(redirect_uri).replace("http://", "https://")
+    # Cloudflare 환경(daehak.cc)에서는 https가 필수이지만, 
+    # 로컬(localhost) 개발 시에는 http를 유지해야 함.
+    host = request.headers.get("host", "")
+    if "localhost" not in host and "127.0.0.1" not in host:
+        redirect_uri = str(redirect_uri).replace("http://", "https://")
+    else:
+        redirect_uri = str(redirect_uri)
     
     print(f"DEBUG: Using redirect_uri: {redirect_uri}")
     return await google.authorize_redirect(request, redirect_uri)

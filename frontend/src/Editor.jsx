@@ -140,9 +140,16 @@ export default function Editor({ initialText, onSave, analysisResult, setTooltip
     }
   }, [initialText, editor])
 
+  // 분석이 시작되면 자동으로 '분석 실행' 탭으로 이동
+  useEffect(() => {
+    if (isAnalyzing) {
+      setActiveTab('run_analysis')
+    }
+  }, [isAnalyzing])
+
   // 분석이 완료되면 자동으로 하이라이트 탭으로 이동
   useEffect(() => {
-    if (!isAnalyzing && analysisResult && activeTab === 'run_analysis') {
+    if (!isAnalyzing && analysisResult) {
       setActiveTab('highlight')
     }
   }, [isAnalyzing, analysisResult])
