@@ -649,7 +649,7 @@ export default function App() {
     }
   }
 
-  async function onRunAnalysis() {
+  async function onRunAnalysis(personaName, personaDesc) {
     if (!activeDocId) return
 
     setAnalysisElapsedSec(0)
@@ -666,7 +666,7 @@ export default function App() {
     })
 
     try {
-      const stream = runAnalysisStream(activeDocId)
+      const stream = runAnalysisStream(activeDocId, { personaName, personaDesc })
       
       let finalData = null
       

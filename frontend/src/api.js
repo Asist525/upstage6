@@ -86,12 +86,23 @@ export async function getMe() {
   return request('/auth/me');
 }
 
-export async function* runAnalysisStream(docId) {
+export async function* runAnalysisStream(docId, options = {}) {
   const url = `${API_BASE}/analysis/run-stream/${docId}`;
-  const response = await fetch(url, {
+  
+  const fetchOptions = {
     method: 'POST',
     headers: getHeaders()
-  });
+  };
+
+  if (Object.keys(options).length > 0) {
+    fetchOptions.headers['Content-Type'] = 'application/json';
+    fetchOptions.body = JSON.stringify({
+      persona_name: options.personaName,
+      persona_desc: options.personaDesc
+    });
+  }
+
+  const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
     throw new Error(await response.text());

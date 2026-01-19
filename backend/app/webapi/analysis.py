@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
+from pydantic import BaseModel
 
 from app.core.db import get_session, Document, Analysis, User
 from app.core.auth import get_current_user
@@ -12,12 +13,25 @@ from app.webapi.schemas import AnalysisOut, AnalysisDetail
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
+class AnalysisRequest(BaseModel):
+    persona_name: str | None = None
+    persona_desc: str | None = None
+
 @router.post("/run-stream/{doc_id}")
 async def run_analysis_stream(
     doc_id: str,
+    payload: AnalysisRequest | None = None,
     current_user: User = Depends(get_current_user)
 ):
     mode = "full" if current_user else "causality_only"
+    
+    # 페르소나 설정 추출
+    analysis_options = {}
+    if payload:
+        if payload.persona_name:
+            analysis_options['persona_name'] = payload.persona_name
+        if payload.persona_desc:
+            analysis_options['persona_desc'] = payload.persona_desc
 
     # 세션을 미리 열어 문서 정보를 가져온 뒤 닫음
     async with get_session() as session:
@@ -29,7 +43,10 @@ async def run_analysis_stream(
 
     async def event_generator():
         try:
-            async for event in stream_analysis_for_text(extracted_text, context=meta_json, mode=mode):
+            # options를 context에 병합하거나 별도로 전달
+            # 여기서는 context(meta_json)는 원본 데이터이므로, options를 별도 인자로 넘기는 것이 깔끔하지만
+            # stream_analysis_for_text 인터페이스에 맞춰 options를 추가 인자로 전달
+            async for event in stream_analysis_for_text(extracted_text, context=meta_json, mode=mode, options=analysis_options):
                 if event["type"] == "final_result":
                     final_result = event["data"]
                     

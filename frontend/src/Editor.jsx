@@ -95,6 +95,10 @@ export default function Editor({ initialText, onSave, analysisResult, setTooltip
   const [fontSize, setFontSize] = useState(16)
   const [isLegendOpen, setIsLegendOpen] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
+  
+  // 페르소나 설정 상태
+  const [personaName, setPersonaName] = useState('')
+  const [personaDesc, setPersonaDesc] = useState('')
 
   const fonts = [
     { name: '마루부리', value: "'MaruBuri', serif" },
@@ -319,7 +323,7 @@ export default function Editor({ initialText, onSave, analysisResult, setTooltip
 
         <div style={{ display: 'flex', gap: 4 }}>
           <TabButton label="초고쓰기" active={activeTab === 'draft'} onClick={() => setActiveTab('draft')} icon="✍️" />
-          <TabButton label="페르소나" active={activeTab === 'persona'} onClick={() => setActiveTab('persona')} icon="🎭" />
+          <TabButton label="가상 독자" active={activeTab === 'persona'} onClick={() => setActiveTab('persona')} icon="🎭" />
           <TabButton label="분석 실행" active={activeTab === 'run_analysis'} onClick={() => setActiveTab('run_analysis')} icon="⚡" />
           <TabButton label="하이라이트" active={activeTab === 'highlight'} onClick={() => setActiveTab('highlight')} icon="🖍️" />
         </div>
@@ -407,17 +411,33 @@ export default function Editor({ initialText, onSave, analysisResult, setTooltip
           {/* 페르소나 설정 영역 */}
           {activeTab === 'persona' && (
             <div style={{ background: 'white', borderRadius: 12, padding: '40px', boxShadow: '0 4px 25px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '2rem', color: '#333', textAlign: 'center' }}>가상 독자(페르소나) 설정</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '2rem', color: '#333', textAlign: 'center' }}>가상 독자 설정</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 600, margin: '0 auto' }}>
                 <div>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: '#444', marginBottom: 8, display: 'block' }}>페르소나 이름</label>
-                  <input type="text" placeholder="예: 까칠한 웹소설 PD, 20대 로맨스 열혈 독자" style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, outline: 'none' }} />
+                  <label style={{ fontSize: 14, fontWeight: 700, color: '#444', marginBottom: 8, display: 'block' }}>가상 독자 간단 설정</label>
+                  <input 
+                    type="text" 
+                    value={personaName}
+                    onChange={(e) => setPersonaName(e.target.value)}
+                    placeholder="예: 까칠한 웹소설 PD, 20대 로맨스 열혈 독자" 
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, outline: 'none' }} 
+                  />
                 </div>
                 <div>
-                  <label style={{ fontSize: 14, fontWeight: 700, color: '#444', marginBottom: 8, display: 'block' }}>성격 및 배경 정보</label>
-                  <textarea placeholder="해당 페르소나의 성향을 자유롭게 적어주세요." style={{ width: '100%', height: 120, padding: '12px 16px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, outline: 'none', resize: 'none', lineHeight: 1.6 }} />
+                  <label style={{ fontSize: 14, fontWeight: 700, color: '#444', marginBottom: 8, display: 'block' }}>(옵션) 가상 독자 상세 설정</label>
+                  <textarea 
+                    value={personaDesc}
+                    onChange={(e) => setPersonaDesc(e.target.value)}
+                    placeholder="해당 페르소나의 성향을 자유롭게 적어주세요." 
+                    style={{ width: '100%', height: 120, padding: '12px 16px', borderRadius: 8, border: '1px solid #ddd', fontSize: 15, outline: 'none', resize: 'none', lineHeight: 1.6 }} 
+                  />
                 </div>
-                <button onClick={() => setActiveTab('run_analysis')} style={{ width: '100%', padding: '16px', background: '#333', color: 'white', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>이 페르소나에게 피드백 받기</button>
+                <button 
+                  onClick={() => setActiveTab('run_analysis')} 
+                  style={{ width: '100%', padding: '16px', background: '#333', color: 'white', border: 'none', borderRadius: 8, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: '8px' }}
+                >
+                  가상 독자 설정 완료 ✅
+                </button>
               </div>
             </div>
           )}
@@ -437,12 +457,12 @@ export default function Editor({ initialText, onSave, analysisResult, setTooltip
                   <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔬</div>
                   <h2 style={{ fontSize: '1.8rem', fontWeight: 800, marginBottom: '16px', color: '#333' }}>전문가 분석 준비 완료</h2>
                   <p style={{ color: '#666', marginBottom: '40px', lineHeight: 1.6 }}>
-                    7명의 AI 페르소나가 당신의 문장을 기다리고 있습니다.<br/>
+                    7개의 주요 에이전트가 당신의 문장을 기다리고 있습니다.<br/>
                     준비가 되셨다면 아래 버튼을 눌러주세요.
                   </p>
                   <button 
                     className="btn" 
-                    onClick={onRunAnalysis} 
+                    onClick={() => onRunAnalysis(personaName, personaDesc)} 
                     style={{ 
                       padding: '18px 64px', fontSize: '1.1rem', fontWeight: 800, background: '#4CAF50', color: 'white', border: 'none', borderRadius: 12, cursor: 'pointer', boxShadow: '0 4px 15px rgba(76, 175, 80, 0.3)', transition: 'all 0.2s'
                     }}

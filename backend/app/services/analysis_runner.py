@@ -65,6 +65,7 @@ async def stream_analysis_for_text(
     text: str,
     context: Optional[str] = None,
     mode: str = "full",
+    options: Optional[Dict[str, Any]] = None,
 ):
     """
     분석 과정을 실시간으로 스트리밍하는 비동기 제너레이터
@@ -83,9 +84,18 @@ async def stream_analysis_for_text(
         yield {"type": "final_result", "data": res}
         return
 
+    # 사용자 정의 페르소나 입력 확인
+    user_persona_input = None
+    if options and (options.get("persona_name") or options.get("persona_desc")):
+        user_persona_input = {
+            "name": options.get("persona_name", ""),
+            "desc": options.get("persona_desc", "")
+        }
+
     initial_state: AgentState = {
         "original_text": text,
         "context": context,
+        "user_persona_input": user_persona_input,
         "logs": []
     }
 

@@ -10,6 +10,7 @@ class AgentState(TypedDict, total=False):
     # entry
     original_text: str
     context: Optional[str]
+    user_persona_input: Optional[Dict[str, str]] # { "name": ..., "desc": ... }
     logs: Annotated[List[Dict[str, Any]], merge_logs]  # [{agent: str, message: str, type: str, timestamp: float}]
 
     # preprocessing

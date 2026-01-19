@@ -38,10 +38,14 @@ def reader_persona_node(state: AgentState) -> AgentState:
     original_text = state.get("original_text", "")
     preview_text = original_text[:3000] if original_text else ""
 
-    # 3. 에이전트 입력 구성
+    # 3. 사용자 지정 페르소나 확인
+    user_persona = state.get("user_persona_input")
+
+    # 4. 에이전트 입력 구성
     agent_input = {
         "meta": clean_context,
-        "text_preview": preview_text
+        "text_preview": preview_text,
+        "user_persona": user_persona
     }
 
     result = reader_persona_agent.run(agent_input)
