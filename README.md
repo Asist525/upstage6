@@ -8,7 +8,7 @@
 ## 👤 Maintainer Info (Portfolio Fork)
 
 - **Maintainer**: 박건원 (GitHub: [Asist525](https://github.com/Asist525))
-- **Role**: Frontend Lead / UI·UX Optimization / Feature Implementation
+- **Role**: Backend Engineering (Primary) / Frontend Optimization
 - **Context**: 본 레포지토리는 **TEAM CONTEXTOR (TEAM SIX)** 해커톤 프로젝트를 기반으로, **개인 포트폴리오 및 기술 데모 목적**으로 포크(Fork)하여 관리하는 버전입니다.
 
 ---
@@ -16,29 +16,40 @@
 ## 🏆 My Verified Contributions
 
 > **핵심 기여 사항**
-> 팀 프로젝트 중 제가 주도적으로 개발하고 기여한 핵심 기능과 커밋 내역입니다.  
-> Evidence: [Commits by Asist525](commits/main?author=Asist525)
+> 단순 참여가 아닌, **직접 설계하고 코드로 구현한 핵심 기능**입니다.
+> Evidence: [Commits by Asist525](https://github.com/Asist525/upstage6/commits/main?author=Asist525)
 
-### 1. UI/UX & Visualization (Frontend Lead)
-사용자가 분석 결과를 직관적으로 이해할 수 있도록 시각화 및 인터랙션 로직을 전담하여 구현했습니다.
+### 🧠 1. Backend Engineering & MLOps (Primary)
+**FastAPI**와 **LangGraph**를 기반으로 멀티 에이전트 파이프라인의 안정성과 평가 시스템을 주도적으로 구축했습니다.
 
-* **Highlight System (협업 기능 구현)**
-    * 이슈가 발생한 텍스트 구간(Span)을 계산하여 원문에 **형광펜 효과** 적용
-    * 이슈 타입별(가독성, 혐오 표현 등) 색상 팔레트 시스템 구축 및 가시성 강화
-    * Hover 시 상세 분석 내용을 보여주는 **커스텀 툴팁(Tooltip)** 컴포넌트 개발
-* **Persona Settings UI**
-    * 독자 페르소나/관점 설정을 위한 제어 패널 UI 구현
-    * 복잡한 설정 로직을 사용자 친화적인 워크플로우로 정리
+- **Eval / QA Scoring 파이프라인 확장**
+  - 단순 LLM 호출을 넘어, 결과의 신뢰도를 측정하는 **Self-Evaluation System**을 설계했습니다.
+  - **LangGraph Node 구성**: `Spelling Evaluator` 도입 및 `eval_report`, `pipeline_runner` 구조를 정립하여 분석-평가 순환 루프를 완성했습니다.
+- **Observability (LangSmith) 도입**
+  - 프로덕션 레벨의 디버깅을 위해 **LangSmith**를 연동했습니다.
+  - `analysis_runner` 및 `eval_runner`의 실행 경로를 계측(Tracing)하여 토큰 사용량 및 레이턴시를 모니터링할 수 있는 환경을 구축했습니다.
+- **Split/Chunking 기반 분석 안정화**
+  - 대용량 텍스트 처리 시 발생하는 컨텍스트 누락을 방지하기 위해 `SplitAgent` 로직을 개선했습니다.
+  - 문장 단위 Chunking 및 입력 포맷 정규화를 통해 후속 에이전트(Tone, Narrative 등)의 분석 정확도를 높였습니다.
 
-### 2. Key Commits (Code Level)
-면접 및 코드 리뷰 시 참고할 수 있는 주요 커밋 내역입니다.
+### 🎨 2. Frontend Optimization (Secondary)
+백엔드 로직을 사용자에게 직관적으로 전달하기 위한 UI/UX 개선 작업을 수행했습니다.
 
-| Type | Commit Message | Hash | Description |
-| :--- | :--- | :--- | :--- |
-| **Feat** | Responsive UI + Tooltip + Highlight UX | [`3cb9120`](commit/3cb9120a748017626b95c0f900229e8fcf4ad29c) | 반응형 레이아웃 및 하이라이트/툴팁 핵심 로직 구현 |
-| **Style** | Highlight Color Palette | [`8682d57`](commit/8682d57cf63a2982d8c22cf3881e5c268e2397fd) | 이슈 심각도 및 카테고리에 따른 색상 구분성 강화 |
-| **Fix** | Highlight Rendering Fix | [`f6167dc`](commit/f6167dc5292a7e8a3bba0cb644f5b92ca1bd9cc5) | 텍스트 오프셋 매핑 오류 수정 및 렌더링 최적화 |
-| **Refactor**| Persona UI & Settings | [`3842878`](commit/384287896656e700a13425e6362e09c44e38c7e4) | 페르소나 설정 상태 관리 및 UI 컴포넌트 구조 개선 |
+- **Highlight & Tooltip System**: 분석된 메타데이터를 원문 텍스트에 매핑하는 로직을 최적화하고, 가독성을 고려한 색상 팔레트를 적용했습니다.
+- **UI Stabilization**: 리포트/스코어 패널의 토글 UX를 개선하고, 레이아웃 스크롤 및 JSX 렌더링 오류를 수정하여 데모 시연 품질을 확보했습니다.
+
+---
+
+### 🗝️ Key Commits (Evidence)
+면접관님께서 **가장 중점적으로 보셔야 할 코드**입니다. (링크 클릭 시 Diff 확인 가능)
+
+| Category | Commit | Description |
+| :--- | :--- | :--- |
+| **Architecture** | [`0e205be`](https://github.com/Asist525/upstage6/commit/0e205be6e22deca51cb3bc1afe87c79effeb9be4) | **Spelling Agent + Evaluator 체계 전환**: 평가 시스템 구조화 및 리포트 파이프라인 정립 |
+| **Feature** | [`e81e52a`](https://github.com/Asist525/upstage6/commit/e81e52a9e9ab96e2055910acfbd1e44827cfb188) | **Eval Logic 확장**: Spelling Evaluator 도입 및 LangGraph 노드 연결 |
+| **Ops** | [`bc1089b`](https://github.com/Asist525/upstage6/commit/bc1089b42d50887bf4e69f751596158f7239149c) | **Observability**: LangSmith 추적(Tracing) 설정 및 런타임 계측 코드 적용 |
+| **Data** | [`44c5882`](https://github.com/Asist525/upstage6/commit/44c5882b8088a4253999cdd37a0dfafc8635c19e) | **Pipeline Stabilization**: Split Agent 청킹 로직 개선 및 대용량 처리 안정화 |
+| **UI/UX** | [`3cb9120`](https://github.com/Asist525/upstage6/commit/3cb9120a748017626b95c0f900229e8fcf4ad29c) | **Visualization**: 하이라이트 렌더링 최적화 및 툴팁/반응형 UI 구현 |
 
 ---
 
@@ -71,7 +82,7 @@
 | :--- | :--- |
 | **Framework** | FastAPI (Python 3.11+) |
 | **LLM** | Upstage Solar (solar-pro2) |
-| **Orchestration** | LangChain / Custom Agent Logic |
+| **Orchestration** | LangChain / LangGraph |
 | **Database** | SQLite (SQLAlchemy) |
 | **Parsing** | Upstage Document Parse, python-docx, pypdf |
 | **Observability**| LangSmith |
@@ -81,7 +92,7 @@
 | :--- | :--- |
 | **Framework** | React 18 (Vite) |
 | **Rendering** | react-markdown, Custom Highlight logic |
-| **Styling** | Tailwind CSS (Predicted) / Styled Components |
+| **Styling** | Tailwind CSS / Styled Components |
 
 ---
 
@@ -105,7 +116,7 @@ pip install -e .
 
 # 환경변수 설정
 cp .env.example .env
-# .env 파일을 열어 UPSTAGE_API_KEY 등을 입력하세요.
+# .env 파일을 열어 UPSTAGE_API_KEY, LANGSMITH_API_KEY 등을 입력하세요.
 
 # (선택) DB 마이그레이션
 # backend/data/team.db에 스키마 변경 사항이 있을 경우 실행
