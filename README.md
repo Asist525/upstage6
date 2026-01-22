@@ -43,14 +43,15 @@ FastAPI + LangGraph 기반 파이프라인에서 **신뢰도(평가 루프)**와
 
 ### 2. Collaborative Engineering (Team-built, My Contributions)
 
-이 섹션은 **팀 협업으로 구축된 기능** 중, 제가 **설계 논의 및 핵심 로직 구현**에 기여한 내용입니다.
+이 섹션은 팀 협업으로 구축된 기능 중, 제가 설계/구현/개선에 참여한 범위를 설명합니다.
+단독 구현을 의미하지 않으며, 개인 기여 증빙은 Verified(Commits) 링크를 기준으로 합니다.
 
 * **Highlight System (Offset/Span Mapping)**
-* **Contribution**: 텍스트가 가공(Chunking)되는 과정에서 원본 위치(Span)가 소실되지 않도록 **좌표 매핑 알고리즘**을 설계하고, 프론트엔드 렌더링을 위한 데이터 구조를 정의했습니다.
+* **Contribution**: 청킹/가공 과정에서 원문 위치(span)가 어긋나는 문제를 팀과 함께 해결했으며, 본 포크에서는 하이라이트 렌더링/표현 품질 개선을 커밋으로 반영했습니다.
 
 
 * **Persona Settings (Context Injection)**
-* **Contribution**: 사용자 설정(독자 관점, 난이도 등)이 분석 에이전트의 프롬프트에 동적으로 반영되는 **Context Injection 파이프라인**을 설계하고, UI 설정 흐름을 최적화했습니다.
+* **Contribution**: 페르소나/설정 흐름을 팀과 함께 구성했고, 본 포크에서는 설정 UI 단순화 및 사용성 개선을 반영했습니다.
 
 
 
@@ -65,11 +66,11 @@ FastAPI + LangGraph 기반 파이프라인에서 **신뢰도(평가 루프)**와
 
 | Category | Commit | Description |
 | --- | --- | --- |
-| **Architecture** | [`0e205be`](https://www.google.com/search?q=%5Bhttps://github.com/Asist525/upstage6/commit/0e205be6e22deca51cb3bc1afe87c79effeb9be4%5D(https://github.com/Asist525/upstage6/commit/0e205be6e22deca51cb3bc1afe87c79effeb9be4)) | **System Design**: Spelling Agent + Evaluator 체계 전환 및 리포트 파이프라인 정립 |
-| **Feature** | [`e81e52a`](https://www.google.com/search?q=%5Bhttps://github.com/Asist525/upstage6/commit/e81e52a9e9ab96e2055910acfbd1e44827cfb188%5D(https://github.com/Asist525/upstage6/commit/e81e52a9e9ab96e2055910acfbd1e44827cfb188)) | **Logic Expansion**: Eval Logic 확장 및 LangGraph 노드 연결 |
-| **Ops** | [`bc1089b`](https://www.google.com/search?q=%5Bhttps://github.com/Asist525/upstage6/commit/bc1089b42d50887bf4e69f751596158f7239149c%5D(https://github.com/Asist525/upstage6/commit/bc1089b42d50887bf4e69f751596158f7239149c)) | **Observability**: LangSmith Tracing 설정 및 런타임 계측 코드 적용 |
-| **Data** | [`44c5882`](https://www.google.com/search?q=%5Bhttps://github.com/Asist525/upstage6/commit/44c5882b8088a4253999cdd37a0dfafc8635c19e%5D(https://github.com/Asist525/upstage6/commit/44c5882b8088a4253999cdd37a0dfafc8635c19e)) | **Pipeline Stability**: Split Agent 청킹 로직 개선 및 대용량 처리 안정화 |
-| **UI/UX** | [`3cb9120`](https://www.google.com/search?q=%5Bhttps://github.com/Asist525/upstage6/commit/3cb9120a748017626b95c0f900229e8fcf4ad29c%5D(https://github.com/Asist525/upstage6/commit/3cb9120a748017626b95c0f900229e8fcf4ad29c)) | **Visualization**: 하이라이트 렌더링 최적화 및 툴팁/반응형 UI 구현 |
+| **Architecture** | [`0e205be`](https://github.com/Asist525/upstage6/commit/0e205be6e22deca51cb3bc1afe87c79effeb9be4) | **System Design**: Spelling Agent + Evaluator 체계 전환 및 리포트 파이프라인 정립 |
+| **Feature** | [`e81e52a`](https://github.com/Asist525/upstage6/commit/e81e52a9e9ab96e2055910acfbd1e44827cfb188) | **Logic Expansion**: Eval Logic 확장 및 LangGraph 노드 연결 |
+| **Ops** | [`bc1089b`](https://github.com/Asist525/upstage6/commit/bc1089b42d50887bf4e69f751596158f7239149c) | **Observability**: LangSmith Tracing 설정 및 런타임 계측 코드 적용 |
+| **Data** | [`44c5882`](https://github.com/Asist525/upstage6/commit/44c5882b8088a4253999cdd37a0dfafc8635c19e) | **Pipeline Stability**: Split Agent 청킹 로직 개선 및 대용량 처리 안정화 |
+| **UI/UX** | [`3cb9120`](https://github.com/Asist525/upstage6/commit/3cb9120a748017626b95c0f900229e8fcf4ad29c) | **Visualization**: 하이라이트 렌더링 최적화 및 툴팁/반응형 UI 구현 |
 
 ---
 
@@ -84,10 +85,10 @@ FastAPI + LangGraph 기반 파이프라인에서 **신뢰도(평가 루프)**와
 
 각 분야의 전문가 역할을 하는 AI 에이전트들이 유기적으로 협업합니다.
 
-* **🕵️ Narrative Analyst**: 인과관계, 전개 흐름, 긴장도(Tension) 분석.
-* **🎨 Tone & Style Expert**: 문체 일관성, 가독성, 어조 평가.
-* **🛡️ Safety Guard**: 트라우마 유발 요소, 혐오/차별 표현 탐지.
-* **🎭 Genre Specialist**: 장르적 클리셰 분석 및 독창성 평가.
+* **Narrative Analyst**: 인과관계, 전개 흐름, 긴장도(Tension) 분석.
+* **Tone & Style Expert**: 문체 일관성, 가독성, 어조 평가.
+* **Safety Guard**: 트라우마 유발 요소, 혐오/차별 표현 탐지.
+* **Genre Specialist**: 장르적 클리셰 분석 및 독창성 평가.
 
 ### 3. 신뢰성 검증 시스템 (Self-Evaluation)
 
